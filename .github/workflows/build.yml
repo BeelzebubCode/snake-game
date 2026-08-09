@@ -1,0 +1,54 @@
+name: Build LexiSnake Executables (Windows & macOS)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: LexiSnake-Windows
+            output_archive: LexiSnake-Windows.zip
+          - os: macos-latest
+            artifact_name: LexiSnake-macOS
+            output_archive: LexiSnake-macOS.zip
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pygame-ce pyinstaller
+
+      - name: Build Executable with PyInstaller (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --name LexiSnake --add-data "data;data" main.py
+          powershell Compress-Archive -Path dist/LexiSnake/* -DestinationPath LexiSnake-Windows.zip
+
+      - name: Build Executable with PyInstaller (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --name LexiSnake --add-data "data:data" main.py
+          cd dist && zip -r ../LexiSnake-macOS.zip LexiSnake.app || zip -r ../LexiSnake-macOS.zip LexiSnake
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.output_archive }}
