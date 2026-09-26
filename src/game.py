@@ -29,6 +29,7 @@ STATE_OPTIONS = 5
 STATE_RESULT_POPUP = 6
 STATE_TUTORIAL = 7
 STATE_COUNTDOWN = 8
+STATE_TUTORIAL_HELP = 9
 
 HIGHSCORE_FILE = "data/highscore.txt"
 
@@ -129,6 +130,12 @@ class Game:
 
     def start_countdown(self, next_state=STATE_PLAYING):
         """Starts 3-second countdown buffer to let player pre-steer before snake moves."""
+        if (
+            next_state == STATE_TUTORIAL
+            and self.tutorial_ctrl.step not in self.tutorial_seen_steps
+        ):
+            self.show_tutorial_help(next_state)
+            return
         self.freeze_world()
         self.state = STATE_COUNTDOWN
         self.countdown_target_state = next_state
@@ -155,6 +162,7 @@ class Game:
         """Initializes the Decoupled Tutorial Controller."""
         self.is_interactive_tutorial = True
         self.tutorial_ctrl.reset()
+        self.tutorial_seen_steps = set()
         self.score = 0
         self.used_words = set()
         self._frozen_since = None
@@ -205,6 +213,26 @@ class Game:
             allowed_levels=allowed_levels,
             score_multiplier=score_multiplier,
         )
+
+        if (
+            self.is_interactive_tutorial
+            and self.tutorial_ctrl.step not in self.tutorial_seen_steps
+        ):
+            self.show_tutorial_help(STATE_WORD_SOLVING)
+
+    def show_tutorial_help(self, target_state):
+        self.freeze_world()
+        self.tutorial_seen_steps.add(self.tutorial_ctrl.step)
+        self.tutorial_help_target = target_state
+        self.state = STATE_TUTORIAL_HELP
+
+    def close_tutorial_help(self):
+        if self.tutorial_help_target == STATE_WORD_SOLVING:
+            # Reading instructions never consumes the puzzle's 45 seconds.
+            self.modal_start_time = time.time()
+            self.state = STATE_WORD_SOLVING
+        else:
+            self.start_countdown(STATE_TUTORIAL)
 
     def submit_word_challenge(self):
         self.modal_ui.status_scroll = 0
@@ -433,6 +461,29 @@ class Game:
             mouse_pos = getattr(event, "pos", self.viewport.mouse_pos())
             key = event.key if event.type == pygame.KEYDOWN else None
             click = event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
+            if self.state == STATE_TUTORIAL_HELP:
+                if key in (
+                    pygame.K_RETURN,
+                    pygame.K_KP_ENTER,
+                    pygame.K_SPACE,
+                    pygame.K_ESCAPE,
+                ) or (
+                    click
+                    and (
+                        getattr(
+                            self.ui_renderer,
+                            "tutorial_close_rect",
+                            pygame.Rect(0, 0, 0, 0),
+                        ).collidepoint(mouse_pos)
+                        or getattr(
+                            self.ui_renderer,
+                            "tutorial_continue_rect",
+                            pygame.Rect(0, 0, 0, 0),
+                        ).collidepoint(mouse_pos)
+                    )
+                ):
+                    self.close_tutorial_help()
+                continue
             if self.state == STATE_WORD_SOLVING and self.challenge_remaining() <= 0:
                 self.fail_word_challenge()
                 continue
@@ -647,6 +698,7 @@ class Game:
 
         if self.state == STATE_TUTORIAL:
             self.tutorial_ctrl.sound_enabled = self.opt_sound_enabled
+            previous_step = self.tutorial_ctrl.step
             res = self.tutorial_ctrl.update()
             if isinstance(res, PortalInstance):
                 self.trigger_word_challenge(res)
@@ -655,6 +707,11 @@ class Game:
                 self.game_over_reason = f"Tutorial Lesson: {res[1]}"
                 if self.opt_sound_enabled:
                     self.sound_mgr.play_defeat()
+            elif (
+                self.tutorial_ctrl.step != previous_step
+                and self.tutorial_ctrl.step not in self.tutorial_seen_steps
+            ):
+                self.show_tutorial_help(STATE_TUTORIAL)
             return
 
         now = time.time()
@@ -753,11 +810,16 @@ class Game:
                 snake.inventory,
                 self.inventory_scroll_offset,
             )
-            if tutorial and self.state == STATE_TUTORIAL:
+            if tutorial and self.state in (STATE_TUTORIAL, STATE_TUTORIAL_HELP):
                 self.tutorial_ctrl.render_banner(ui.mouse_pos)
             if self.state == STATE_COUNTDOWN:
                 ui.draw_countdown_overlay(
                     max(1, 3 - int(time.time() - self.countdown_start_time)), snake
+                )
+            elif self.state == STATE_TUTORIAL_HELP:
+                ui.draw_tutorial_help(
+                    self.tutorial_ctrl.step,
+                    self.tutorial_ctrl.ths[self.tutorial_ctrl.step],
                 )
             elif self.state == STATE_WORD_SOLVING:
                 self.modal_ui.draw(self.challenge_remaining(), self.challenge_limit)

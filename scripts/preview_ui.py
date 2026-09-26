@@ -68,18 +68,22 @@ def main():
     game.tutorial_ctrl.step = 4
     game.render()
     pygame.image.save(game.screen, args.output / "tutorial.png")
-    game.start_countdown(STATE_TUTORIAL)
+    game.show_tutorial_help(STATE_TUTORIAL)
+    game.render()
+    pygame.image.save(game.screen, args.output / "tutorial-help.png")
+    game.close_tutorial_help()
     game.render()
     pygame.image.save(game.screen, args.output / "countdown.png")
     game.reset_tutorial_game()
     game.tutorial_ctrl.step = 3
     game.tutorial_ctrl.snake.inventory = list("SNAKEL")
     game.trigger_word_challenge(PortalInstance((12, 12)))
+    game.close_tutorial_help()
     game.fail_word_challenge()
     game.render()
     pygame.image.save(game.screen, args.output / "tutorial-retry.png")
     pygame.quit()
-    print(f"Saved 10 UI screenshots to {args.output}")
+    print(f"Saved 11 UI screenshots to {args.output}")
 
 
 if __name__ == "__main__":

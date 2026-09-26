@@ -25,7 +25,8 @@ Long status and result text has a clipped scroll area, with the action buttons o
 - Tutorial: Esc exits; P pauses. Completing the word challenge accepts both mouse and keyboard Continue.
 - Word challenge: type A–Z or click tiles, Backspace removes the last letter, Esc clears, F1 auto-arranges an available word.
 - Page Up / Down, mouse wheel, or arrow buttons access all collected letters.
-- Restart and movement resume use a 3-second countdown with pre-steering.
+- Restart and movement resume use a 3-second countdown with pre-steering. Arrows at the snake head and in the countdown panel show the accepted next direction, including rejected reverse turns.
+- Each tutorial step opens a dismissible Thai instruction popup. Close (×), Enter/Space/Esc, or the Continue button acknowledges it. Movement and puzzle timers stay frozen while reading; movement resumes with a countdown and the puzzle starts with its full timer.
 - F3 / Pause or the visible puzzle Pause button pauses word challenges without clearing input or consuming time. P remains a typeable letter in the puzzle.
 - Losing window focus automatically pauses movement, countdowns and word challenges. Regaining focus does not resume automatically. Word challenges resume directly; moving snakes resume through the countdown.
 - Game-over buttons support mouse clicks as well as keyboard shortcuts.

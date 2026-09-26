@@ -699,6 +699,92 @@ class UIRenderer:
             self.mouse_pos,
         )
 
+    def draw_tutorial_help(self, step, instruction):
+        rect = self.overlay(720, 450)
+        titles = (
+            "บังคับงูให้กินตัวอักษร",
+            "สะสมตัวอักษรให้ครบคำ",
+            "เข้าประตูสีเขียว",
+            "เรียงคำเพื่อรับคะแนน",
+            "พร้อมเล่นแล้ว!",
+        )
+        label(
+            self.surface,
+            f"บทเรียน {step + 1} / 5",
+            self.font_header,
+            (rect.x + 32, rect.y + 24),
+            PRIMARY,
+        )
+        for index in range(5):
+            pygame.draw.rect(
+                self.surface,
+                PRIMARY if index <= step else BORDER,
+                (rect.x + 32 + index * 62, rect.y + 62, 50, 5),
+                border_radius=2,
+            )
+        self.tutorial_close_rect = pygame.Rect(rect.right - 76, rect.y + 16, 48, 48)
+        button(
+            self.surface,
+            self.tutorial_close_rect,
+            "",
+            self.font_body,
+            mouse_pos=self.mouse_pos,
+        )
+        cx, cy = self.tutorial_close_rect.center
+        pygame.draw.line(self.surface, TEXT, (cx - 8, cy - 8), (cx + 8, cy + 8), 3)
+        pygame.draw.line(self.surface, TEXT, (cx - 8, cy + 8), (cx + 8, cy - 8), 3)
+        label(
+            self.surface,
+            titles[step],
+            self.font_modal_title,
+            (rect.x + 32, rect.y + 90),
+        )
+        render_wrapped_text(
+            self.surface,
+            instruction,
+            self.font_body,
+            TEXT,
+            rect.x + 32,
+            rect.y + 154,
+            rect.width - 64,
+            8,
+        )
+        label(
+            self.surface,
+            "เกมหยุดรอให้อ่าน • กด × หรือ Enter เมื่อพร้อม",
+            self.font_small,
+            (rect.x + 32, rect.bottom - 118),
+            MUTED,
+        )
+        self.tutorial_continue_rect = pygame.Rect(
+            rect.x + 32, rect.bottom - 80, rect.width - 64, 48
+        )
+        button(
+            self.surface,
+            self.tutorial_continue_rect,
+            "เข้าใจแล้ว ไปต่อ  [Enter]",
+            self.font_header,
+            True,
+            self.mouse_pos,
+        )
+
+    def draw_direction_arrow(self, center, direction, size=18):
+        dx, dy = direction
+        cx, cy = center
+        tip = (cx + dx * size, cy + dy * size)
+        tail = (cx - dx * size, cy - dy * size)
+        base = (cx + dx * (size - 10), cy + dy * (size - 10))
+        pygame.draw.line(self.surface, PRIMARY, tail, base, 5)
+        pygame.draw.polygon(
+            self.surface,
+            PRIMARY,
+            (
+                tip,
+                (base[0] - dy * 9, base[1] + dx * 9),
+                (base[0] + dy * 9, base[1] - dx * 9),
+            ),
+        )
+
     def draw_countdown_overlay(self, seconds_left, snake=None):
         rect = pygame.Rect(330, 20, 720, 80)
         panel(self.surface, rect)
@@ -717,7 +803,11 @@ class UIRenderer:
         )
         label(
             self.surface,
-            "เกมจะเริ่มเมื่อการนับถอยหลังจบ",
+            (
+                f"ทิศทาง: { {(1, 0): 'ขวา', (-1, 0): 'ซ้าย', (0, -1): 'ขึ้น', (0, 1): 'ลง'}[snake.next_direction] } • ห้ามกลับหลังเข้าลำตัว"
+                if snake
+                else "เกมจะเริ่มเมื่อการนับถอยหลังจบ"
+            ),
             self.font_small,
             (rect.x + 90, rect.y + 47),
             MUTED,
@@ -731,6 +821,22 @@ class UIRenderer:
                 GRID_SIZE,
             )
             pygame.draw.rect(self.surface, PRIMARY, r.inflate(6, 6), 2, border_radius=5)
+            self.draw_direction_arrow(
+                (rect.right - 44, rect.centery), snake.next_direction
+            )
+            center = (
+                max(
+                    GAME_AREA_OFFSET_X + 25,
+                    min(GAME_AREA_OFFSET_X + GAME_AREA_WIDTH - 25, r.centerx),
+                ),
+                max(
+                    GAME_AREA_OFFSET_Y + 25,
+                    min(GAME_AREA_OFFSET_Y + GAME_AREA_HEIGHT - 25, r.centery),
+                ),
+            )
+            pygame.draw.circle(self.surface, PANEL, center, 24)
+            pygame.draw.circle(self.surface, PRIMARY, center, 24, 2)
+            self.draw_direction_arrow(center, snake.next_direction, 15)
 
     def draw_game_over(self, score, reason, tutorial=False):
         rect = self.overlay(720, 460)
