@@ -241,9 +241,9 @@ class UIRenderer:
         label(self.surface, "LEXISNAKE", self.font_logo, (32, 27), PRIMARY)
         label(self.surface, "เก็บตัวอักษร • สร้างคำศัพท์", self.font_small, (34, 77), MUTED)
         for x, title, value in (
-            (340, "คะแนน / SCORE", score),
-            (595, "สถิติสูงสุด / BEST", high_score),
-            (865, "ความยาว / LENGTH", snake_len),
+            (340, "คะแนน", score),
+            (595, "สถิติสูงสุด", high_score),
+            (865, "ความยาวงู", snake_len),
         ):
             label(self.surface, title, self.font_small, (x, 26), MUTED)
             label(
@@ -265,7 +265,7 @@ class UIRenderer:
 
         x, y, w = FOOTER_BAR_X, FOOTER_BAR_Y, FOOTER_BAR_WIDTH
         panel(self.surface, pygame.Rect(x, y, w, 142))
-        label(self.surface, "ประตูคำศัพท์ / PORTALS", self.font_header, (x + 24, y + 18))
+        label(self.surface, "ประตูคำศัพท์", self.font_header, (x + 24, y + 18))
         label(
             self.surface,
             f"เปิดอยู่ {active_portals_count} ประตู",
@@ -352,15 +352,15 @@ class UIRenderer:
         panel(self.surface, pygame.Rect(x, y + 498, w, 126))
         label(
             self.surface,
-            "ประตูเขียว / สร้างคำศัพท์",
+            "เข้าประตูเพื่อเรียงคำ",
             self.font_header,
             (x + 24, y + 509),
         )
         for i, (text, color) in enumerate(
             (
                 ("เข้าประตูแล้วพิมพ์คำ หรือกด F1 ช่วยเรียง", PRIMARY),
-                ("หมดเวลา: หางลด 1 ข้อ • ตัวอักษรยังอยู่", MUTED),
-                ("หางต้องเหลืออย่างน้อย 3 ข้อ", MUTED),
+                ("ตอบไม่ทัน หางจะสั้นลง • ตัวอักษรยังอยู่", MUTED),
+                ("อย่าให้หางสั้นเกินไปนะ", MUTED),
             )
         ):
             label(
@@ -420,14 +420,6 @@ class UIRenderer:
 
         pygame.draw.rect(self.surface, secondary_color, lbl_bg, border_radius=4)
         self.surface.blit(lbl_surf, lbl_surf.get_rect(center=lbl_bg.center))
-        label(
-            self.surface,
-            f"x{portal.get_score_multiplier():g} / -{portal.penalty_tail_loss}",
-            self.font_portal_label,
-            (center_x, py + size - 10),
-            TEXT,
-            True,
-        )
 
     def draw_snake_food_and_portals_smooth(
         self,
@@ -842,7 +834,7 @@ class UIRenderer:
         rect = self.overlay(720, 460)
         label(
             self.surface,
-            "จบเกม / GAME OVER",
+            "จบเกม",
             self.font_modal_title,
             (rect.x + 32, rect.y + 26),
             DANGER,
@@ -996,10 +988,10 @@ class WordSolvingModalUI:
         rect = pygame.Rect((WINDOW_WIDTH - self.modal_w) // 2, 48, self.modal_w, 704)
         panel(self.surface, rect)
         x, y = rect.x + 32, rect.y + 22
-        label(self.surface, "ประตูเขียว / WORD CHALLENGE", self.font_title, (x, y))
+        label(self.surface, "เรียงคำ รับคะแนน", self.font_title, (x, y))
         label(
             self.surface,
-            f"ระดับ {' / '.join(self.allowed_levels)}  •  คะแนน ×{self.score_multiplier:g}",
+            f"คำศัพท์ระดับ {'–'.join((self.allowed_levels[0], self.allowed_levels[-1])) if len(self.allowed_levels) > 1 else self.allowed_levels[0]}",
             self.font_small,
             (x, y + 39),
             MUTED,

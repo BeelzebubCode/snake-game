@@ -38,21 +38,21 @@ class TutorialController:
         self.titles = [
             "1. MOVEMENT & EATING",
             "2. FOOT BAR INVENTORY",
-            "3. 3x3 ISEKAI PORTAL",
+            "3. GREEN PORTAL",
             "4. SOLVING PUZZLES & HINTS",
             "5. GAME OVER RULES & TUTORIAL COMPLETE!",
         ]
         self.ths = [
             "กด W/A/S/D หรือลูกศร บังคับงูเลี้ยวกินตัวอักษร 'S' ที่อยู่ด้านหน้า",
-            "ตัวอักษรจะเก็บเข้า แผงด้านขวา เลี้ยวงูกินตัว 'N', 'A', 'K', 'E' จนครบคำว่า SNAKE",
-            "ประตูมิติต่างโลก 3x3 ปรากฏขึ้นแล้ว! บังคับงูเข้าประตูมิติสีเขียวตรงกลางสนาม",
+            "ตัวอักษรที่กินจะอยู่ด้านขวา เก็บ 'N', 'A', 'K', 'E' เพิ่มให้ครบคำว่า SNAKE",
+            "ประตูสีเขียวเปิดแล้ว! พางูเข้าไปเพื่อเรียงคำจากตัวอักษรที่สะสม",
             "พิมพ์ SNAKE แล้วกด Enter หรือกด F1 ช่วยเรียงคำ",
-            "กฎการแพ้: 1.ชนกำแพง/ตัวเอง 2.หางหดสั้นกว่า 3 ข้อ (ทดลองชนดูได้)",
+            "หลบกำแพงและตัวเอง ตอบคำให้ทันก่อนหางจะสั้นเกินไป พร้อมแล้วกดเริ่มเกมได้เลย",
         ]
         self.ens = [
             "Press W/A/S/D or Arrow keys to steer snake to eat letter 'S'",
             "Eaten letters accumulate safely into แผงตัวอักษร. Eat letters 'N', 'A', 'K', 'E' for SNAKE",
-            "A 3x3 Portal spawned! Steer snake into the Green Portal in grid center",
+            "The green portal is open! Steer the snake inside to make a word",
             "Press HINT [F1] for Thai clues, select 'SNAKE' and press SUBMIT!",
             "Game Over Rules: 1. Wall/Self Collision 2. Tail shrunk below 3 segments (Try crashing!)",
         ]

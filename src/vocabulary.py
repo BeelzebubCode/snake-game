@@ -222,7 +222,7 @@ class CEFRVocabulary:
     ) -> Tuple[bool, str, Optional[str], Optional[str], Optional[str]]:
         word = word.upper().strip()
         if not word:
-            return False, "Please select or type a word!", None, None, None
+            return False, "พิมพ์คำหรือเลือกตัวอักษรก่อนนะ", None, None, None
 
         inventory_counts: Dict[str, int] = {}
         for char in collected_letters:
@@ -233,18 +233,18 @@ class CEFRVocabulary:
         for char in word:
             word_counts[char] = word_counts.get(char, 0) + 1
             if word_counts[char] > inventory_counts.get(char, 0):
-                return False, "Cannot form this word from your collected letters!", None, None, None
+                return False, "ตัวอักษรที่สะสมยังไม่พอสำหรับคำนี้ ลองคำอื่นนะ", None, None, None
 
         res = self._resolve_word_stem(word)
         if not res:
-            return False, f"'{word}' is not in dictionary!", None, None, None
+            return False, f"ยังไม่พบคำว่า '{word}' ลองตรวจตัวสะกดหรือใช้คำอื่นนะ", None, None, None
 
         base_word, level, meaning_en, meaning_th = res
 
         if allowed_levels and level not in allowed_levels:
-            return False, f"'{word}' is not valid for this portal!", None, None, None
+            return False, f"คำว่า '{word}' ไม่อยู่ในระดับที่เลือก ลองคำอื่นนะ", None, None, None
 
-        return True, "Word solved successfully!", level, meaning_en, meaning_th
+        return True, "เรียงคำถูกต้องแล้ว!", level, meaning_en, meaning_th
 
     def find_possible_words(
         self,

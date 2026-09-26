@@ -57,10 +57,10 @@ class MenuUI:
         if scene == "menu":
             for i, (key, text) in enumerate(
                 (
-                    ("play", "เริ่มเล่น / Play"),
-                    ("tutorial", "เรียนรู้วิธีเล่น / Tutorial"),
-                    ("options", "ตั้งค่า / Settings"),
-                    ("exit", "ออกจากเกม / Exit"),
+                    ("play", "เริ่มเล่น"),
+                    ("tutorial", "เรียนรู้วิธีเล่น"),
+                    ("options", "ตั้งค่า"),
+                    ("exit", "ออกจากเกม"),
                 )
             ):
                 self.add(key, text, (766, 276 + i * 68, 352, 52), key == "play")
@@ -72,13 +72,13 @@ class MenuUI:
                 self.add(key + "_prev", "<", (658, y, 48, 48), focusable=False)
                 self.add(key, "", (714, y, 354, 48))
                 self.add(key + "_next", ">", (1076, y, 48, 48), focusable=False)
-            self.add("back", "กลับเมนู / Back  [Esc]", (658, 626, 466, 52), True)
+            self.add("back", "กลับเมนู  [Esc]", (658, 626, 466, 52), True)
         elif scene == "pause":
             for i, (key, text) in enumerate(
                 (
-                    ("resume", "เล่นต่อ / Resume  [P]"),
-                    ("restart", "เริ่มใหม่ / Restart  [R]"),
-                    ("back", "กลับเมนู / Main menu"),
+                    ("resume", "เล่นต่อ  [P]"),
+                    ("restart", "เริ่มใหม่  [R]"),
+                    ("back", "กลับเมนู"),
                 )
             ):
                 self.add(key, text, (440, 310 + i * 68, 400, 52), i == 0)
@@ -99,12 +99,12 @@ class MenuUI:
         if self.scene != "options":
             return
         values = dict(
-            skin=game.skin_names[game.opt_skin_index],
+            skin=("เขียวมิ้นต์", "ม่วงนีออน", "ทองอร่าม", "ฟ้ามหาสมุทร")[game.opt_skin_index],
             vocab=game.vocab_names[game.opt_vocab_index],
             speed=game.speed_labels[game.opt_speed_index],
             timer=game.timer_labels[game.opt_timer_index],
-            grid="เปิด / On" if game.opt_show_grid else "ปิด / Off",
-            sound="เปิด / On" if game.opt_sound_enabled else "ปิด / Muted",
+            grid="เปิด" if game.opt_show_grid else "ปิด",
+            sound="เปิด" if game.opt_sound_enabled else "ปิด",
         )
         for key, value in values.items():
             if self.buttons[key].text != value:
@@ -188,11 +188,11 @@ class MenuUI:
             label(s, "Tab / ลูกศร เลือก  •  Enter ยืนยัน", r.font_small, (766, 582), MUTED)
         elif self.scene == "options":
             panel(s, pygame.Rect(112, 112, 1056, 600))
-            label(s, "ตั้งค่า / SETTINGS", r.font_modal_title, (152, 138), PRIMARY)
+            label(s, "ตั้งค่า", r.font_modal_title, (152, 138), PRIMARY)
             items = (
                 ("รูปลักษณ์งู", "เลือกสีที่มองเห็นง่าย"),
                 ("ระดับคำศัพท์", "เลือกระดับคำที่ใช้ตอบในประตูเขียว"),
-                ("ความเร็วงู", "จำนวนช่องต่อวินาที"),
+                ("ความเร็วงู", "เลือกจังหวะที่เล่นถนัด"),
                 ("เวลาสร้างคำ", "เริ่มนับใหม่เมื่อเข้าประตู"),
                 ("เส้นตาราง", "ช่วยกะระยะการเลี้ยว"),
                 ("เสียงเอฟเฟกต์", "เสียงกินตัวอักษรและตอบคำศัพท์"),
@@ -206,7 +206,7 @@ class MenuUI:
             rect = r.overlay(560, 400)
             label(
                 s,
-                "พักเกม / PAUSED",
+                "พักเกม",
                 r.font_modal_title,
                 (rect.centerx, rect.y + 46),
                 PRIMARY,

@@ -60,7 +60,7 @@ def main():
     game.render()
     pygame.image.save(game.screen, args.output / "result.png")
     game.state = STATE_GAME_OVER
-    game.game_over_reason = "ชนกำแพง / Wall collision"
+    game.game_over_reason = "งูชนกำแพง ลองเลี้ยวก่อนถึงขอบสนามนะ"
     game.render()
     pygame.image.save(game.screen, args.output / "game-over.png")
     game.reset_tutorial_game()

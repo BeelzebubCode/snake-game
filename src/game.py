@@ -62,7 +62,7 @@ def save_high_score(score: int, file_path: str = HIGHSCORE_FILE):
 class Game:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption("LexiSnake - CEFR Anagram Snake")
+        pygame.display.set_caption("LexiSnake")
 
         self.viewport = Viewport()
         self.screen = self.viewport.canvas
@@ -90,25 +90,25 @@ class Game:
 
         self.opt_vocab_index = 0
         self.vocab_names = [
-            "ALL WORDS (A1-C2)",
-            "EASY (A1-A2)",
-            "MEDIUM (B1-B2)",
-            "HARD (C1-C2)",
+            "ทุกระดับ (A1–C2)",
+            "ง่าย (A1–A2)",
+            "ปานกลาง (B1–B2)",
+            "ยาก (C1–C2)",
         ]
 
         self.opt_show_grid = True
 
         self.opt_speed_index = 1
         self.speed_labels = [
-            "SLOW (6/s)",
-            "NORMAL (10/s)",
-            "FAST (13/s)",
-            "TURBO (16/s)",
+            "ช้า",
+            "ปกติ",
+            "เร็ว",
+            "เร็วมาก",
         ]
         self.speed_delays = [1.0 / 6.0, 0.10, 1.0 / 13.0, 0.0625]
 
         self.opt_timer_index = 1
-        self.timer_labels = ["15 SECONDS", "30 SECONDS", "45 SECONDS"]
+        self.timer_labels = ["15 วินาที", "30 วินาที", "45 วินาที"]
         self.timer_values = [15.0, 30.0, 45.0]
 
         self.opt_sound_enabled = True
@@ -316,7 +316,7 @@ class Game:
 
         if len(active_snake.segments) < 3 or not active_snake.is_alive:
             self.state = STATE_GAME_OVER
-            self.game_over_reason = "หมดเวลาสร้างคำ: หางเหลือน้อยกว่า 3 ข้อ"
+            self.game_over_reason = "หางสั้นเกินไปแล้ว ลองใหม่อีกครั้งนะ"
             if self.opt_sound_enabled:
                 self.sound_mgr.play_defeat()
             return
@@ -704,7 +704,7 @@ class Game:
                 self.trigger_word_challenge(res)
             elif isinstance(res, tuple) and res[0] == "GAME_OVER":
                 self.state = STATE_GAME_OVER
-                self.game_over_reason = f"Tutorial Lesson: {res[1]}"
+                self.game_over_reason = "งูชนกำแพง" if res[1] == "Boundary Wall Collision" else "งูชนตัวเอง"
                 if self.opt_sound_enabled:
                     self.sound_mgr.play_defeat()
             elif (
@@ -735,14 +735,14 @@ class Game:
 
             if wall_hit:
                 self.state = STATE_GAME_OVER
-                self.game_over_reason = "Snake Collided with Boundary Wall!"
+                self.game_over_reason = "งูชนกำแพง ลองเลี้ยวก่อนถึงขอบสนามนะ"
                 if self.opt_sound_enabled:
                     self.sound_mgr.play_defeat()
                 return
 
             if self_hit:
                 self.state = STATE_GAME_OVER
-                self.game_over_reason = "Snake Collided with its own Body!"
+                self.game_over_reason = "งูชนตัวเอง ลองเว้นระยะตอนเลี้ยวนะ"
                 if self.opt_sound_enabled:
                     self.sound_mgr.play_defeat()
                 return

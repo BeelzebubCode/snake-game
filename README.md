@@ -1,21 +1,21 @@
 # LexiSnake — เกมงูเก็บตัวอักษรและสร้างคำศัพท์
 
-[![Download V 1.0.0](https://img.shields.io/badge/Download-V%201.0.0-43d9a3)](https://github.com/BeelzebubCode/snake-game/releases/tag/v1.0.0)
+[![Download V 1.0.1](https://img.shields.io/badge/Download-V%201.0.1-43d9a3)](https://github.com/BeelzebubCode/snake-game/releases/tag/v1.0.1)
 
 บังคับงูเก็บตัวอักษร เข้าประตูเขียว แล้วเรียงเป็นคำภาษาอังกฤษเพื่อรับคะแนน มีคำศัพท์ระดับ CEFR A1–C2 พร้อมคำแปลไทย เล่นแบบออฟไลน์ได้หลังติดตั้งหรือดาวน์โหลดไฟล์เกม
 
 ## ดาวน์โหลดแล้วเล่น (ไม่ต้องติดตั้ง Python)
 
-### [V 1.0.0 — Download](https://github.com/BeelzebubCode/snake-game/releases/tag/v1.0.0)
+### [V 1.0.1 — Download](https://github.com/BeelzebubCode/snake-game/releases/tag/v1.0.1)
 
 เลือกดาวน์โหลดไฟล์เดียวให้ตรงกับเครื่อง ไม่ต้องเลือกจากประวัติ Actions และไม่ต้องเข้าสู่ระบบ GitHub
 
 | ระบบ | ดาวน์โหลด |
 | --- | --- |
-| Windows 64 บิต (x64) | [ดาวน์โหลด Windows](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-Windows-x64.zip) |
-| macOS ชิป Apple (M1 ขึ้นไป) | [ดาวน์โหลด macOS Apple Silicon](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-macOS-arm64.zip) |
-| macOS ชิป Intel | [ดาวน์โหลด macOS Intel](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-macOS-x64.zip) |
-| Linux 64 บิต (x64) | [ดาวน์โหลด Linux](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-Linux-x64.tar.gz) |
+| Windows 64 บิต (x64) | [ดาวน์โหลด Windows](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.1/LexiSnake-Windows-x64.zip) |
+| macOS ชิป Apple (M1 ขึ้นไป) | [ดาวน์โหลด macOS Apple Silicon](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.1/LexiSnake-macOS-arm64.zip) |
+| macOS ชิป Intel | [ดาวน์โหลด macOS Intel](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.1/LexiSnake-macOS-x64.zip) |
+| Linux 64 บิต (x64) | [ดาวน์โหลด Linux](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.1/LexiSnake-Linux-x64.tar.gz) |
 
 > ปุ่ม **Source code** และ **Code → Download ZIP** เป็นซอร์สโค้ด ไม่ใช่ตัวเกมพร้อมเล่น
 
@@ -98,10 +98,17 @@ Dependencies หลักคือ `pygame-ce` และ `pygame_gui` ฟอน�
 
 หากเจอ `ModuleNotFoundError: No module named 'pygame_gui'` หรือ `pygame` ให้ตรวจว่าใช้ Python ตัวเดียวกับที่ติดตั้ง dependencies: บน macOS/Linux รัน `.venv/bin/python -m pip install -r requirements.txt` แล้ว `.venv/bin/python main.py`; บน Windows ใช้ `.venv\Scripts\python.exe` แทน `python3` เครื่องหมาย `(.venv)` ที่พรอมป์ไม่จำเป็นเมื่อเรียก Python ใน `.venv` โดยตรง
 
+## มีอะไรใหม่ใน V 1.0.1
+
+- ประตูแสดงเฉพาะภาพและเวลาที่เหลือ เอา `×1 / -1` และขนาดประตูออกจากคำแนะนำ
+- เมนู ตั้งค่า ข้อความตอบคำผิด และหน้าจบเกมเป็นภาษาไทย อ่านง่ายขึ้น
+- ชื่อความเร็วใช้ ช้า / ปกติ / เร็ว / เร็วมาก ไม่แสดงค่าทางเทคนิค
+- กติกา คะแนน และความเร็วจริงยังเหมือนเดิม
+
 ## วิธีเล่นและปุ่มควบคุม
 
 - **WASD / ลูกศร**: เลี้ยวงู • **Shift / Space**: เร่งความเร็ว
-- เก็บตัวอักษรไว้ในแผงขวา แล้วเข้าประตูเขียวขนาด 3×3 ช่อง
+- เก็บตัวอักษรไว้ในแผงขวา แล้วเข้าประตูสีเขียว
 - พิมพ์ **A–Z** หรือคลิกตัวอักษร • **Enter**: ส่งคำ • **Backspace**: ลบตัวท้าย • **Esc**: ล้างคำ
 - **F1**: ช่วยเรียงคำ • **Page Up / Page Down**: เปลี่ยนหน้าตัวอักษร
 - **P / Esc**: พักขณะบังคับงู • **F3 / ปุ่มพัก**: พักขณะเรียงคำ
