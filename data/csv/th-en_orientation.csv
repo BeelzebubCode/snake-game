@@ -1,0 +1,13 @@
+direction;ทิศทาง;;basic, orientation
+entrance;ทางเข้า;;basic, orientation
+exit;ทางออก;;basic, orientation
+street;ถนน;;basic, orientation
+way;เส้นทาง;;basic, orientation
+square;จัตุรัส;;basic, orientation
+right;ขวา;;basic, orientation
+left;ซ้าย;;basic, orientation
+straight;ตรงไป;;basic, orientation
+back;ย้อนกลับ;;basic, orientation
+here;ที่นี่;;basic, orientation
+there;ที่นั่น;;basic, orientation
+map;แผนที่;;basic, orientation

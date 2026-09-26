@@ -1,0 +1,22 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+build/
+dist/
+/data/highscore.txt
+*.spec
+.DS_Store
+.vscode/
+.idea/
+
+# Local-only tests and generated reports (project policy)
+/tests/
+/test_*.py
+/*_test.py
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml

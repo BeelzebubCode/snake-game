@@ -1,0 +1,14 @@
+train;รถไฟ;;basic, transport
+bus;รถบัส;;basic, transport
+car;รถยนต์;;basic, transport
+tram;รถราง;;basic, transport
+taxi;แท็กซี่;;basic, transport
+bicycle;จักรยาน;;basic, transport
+foot;เดินเท้า;;basic, transport
+station;สถานีรถไฟ;;basic, transport
+terminal;สถานีขนส่ง;;basic, transport
+airport;สนามบิน;;basic, transport
+plane;เครื่องบิน;;basic, transport
+stop;ป้ายรถเมล์;;basic, transport
+ticket;ตั๋ว;;basic, transport
+luggage;กระเป๋าเดินทาง;;basic, transport
