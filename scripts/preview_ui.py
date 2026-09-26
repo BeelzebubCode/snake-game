@@ -54,10 +54,9 @@ def main():
     pygame.image.save(game.screen, args.output / "puzzle.png")
     game.state = STATE_RESULT_POPUP
     game.result_is_win = True
-    game.result_word, game.result_level = "SNAKE", "A1"
-    game.result_meaning_th = "งู • สัตว์เลื้อยคลานที่มีลำตัวยาว ไม่มีขา"
-    game.result_meaning_en = "A reptile with a long body and no legs."
-    game.result_score_earned = 500
+    game.result_word, game.result_level = "RANK", "B2"
+    game.result_meaning_th = "อันดับ"
+    game.result_score_earned = 1400
     game.render()
     pygame.image.save(game.screen, args.output / "result.png")
     game.state = STATE_GAME_OVER

@@ -636,22 +636,16 @@ class UIRenderer:
         is_win,
         word="",
         level="",
-        meaning_en="",
         meaning_th="",
         score_earned=0,
-        reward_info="",
         penalty_info="",
         retry_tutorial=False,
     ):
-        rect = self.overlay()
+        rect = self.overlay(height=470 if is_win else 570)
         color = PRIMARY if is_win or retry_tutorial else DANGER
         label(
             self.surface,
-            "ถูกต้อง! / CORRECT"
-            if is_win
-            else "ลองอีกครั้ง / TRY AGAIN"
-            if retry_tutorial
-            else "หมดเวลา / TIME UP",
+            "ถูกต้อง!" if is_win else "ลองอีกครั้ง" if retry_tutorial else "หมดเวลา",
             self.font_modal_title,
             (rect.x + 32, rect.y + 24),
             color,
@@ -665,7 +659,7 @@ class UIRenderer:
                 TEXT,
                 max_width=rect.width - 64,
             )
-            text = f"ระดับ {level}   •   +{score_earned:,} คะแนน\n\n{meaning_th or 'ยังไม่มีคำแปลไทย'}\n\n{meaning_en}\n\n{reward_info}"
+            text = f"ระดับ {level}   •   +{score_earned:,} คะแนน\n\nคำแปลไทย\n{meaning_th or 'ยังไม่มีคำแปลไทย'}"
         elif retry_tutorial:
             text = (
                 "หมดเวลาแล้ว แต่บทเรียนนี้ไม่หักหางหรือตัวอักษร\n\n"
@@ -675,7 +669,7 @@ class UIRenderer:
         else:
             text = f"{penalty_info}\n\nตัวอักษรสะสมยังอยู่ครบ\nเก็บตัวอักษรเพิ่มแล้วลองใหม่ได้เลย"
         self.result_text_rect = pygame.Rect(
-            rect.x + 32, rect.y + 150, rect.width - 64, 302
+            rect.x + 32, rect.y + 150, rect.width - 64, rect.height - 268
         )
         self.result_scroll_max = scroll_text(
             self.surface,
@@ -699,9 +693,7 @@ class UIRenderer:
         button(
             self.surface,
             self.result_btn_continue,
-            "ลองอีกครั้ง / Retry   [Enter]"
-            if retry_tutorial
-            else "เล่นต่อ / Continue   [Enter]",
+            "ลองอีกครั้ง  [Enter]" if retry_tutorial else "เล่นต่อ  [Enter]",
             self.font_header,
             True,
             self.mouse_pos,

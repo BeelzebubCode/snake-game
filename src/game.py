@@ -123,10 +123,8 @@ class Game:
         self.result_is_win = False
         self.result_word = ""
         self.result_level = ""
-        self.result_meaning_en = ""
         self.result_meaning_th = ""
         self.result_score_earned = 0
-        self.result_reward_info = ""
         self.result_penalty_info = ""
 
     def start_countdown(self, next_state=STATE_PLAYING):
@@ -226,7 +224,7 @@ class Game:
                 self.sound_mgr.play_defeat()
             return
 
-        is_valid, msg, level, meaning_en, meaning_th = self.vocab.validate_word(
+        is_valid, msg, level, _meaning_en, meaning_th = self.vocab.validate_word(
             word, self.modal_ui.inventory
         )
 
@@ -264,18 +262,14 @@ class Game:
             self.high_score = self.score
             save_high_score(self.high_score)
 
-        reward_desc = "คะแนนคำศัพท์ ×1 • ความยาวงูคงเดิม"
-
         if self.is_interactive_tutorial:
             self.tutorial_ctrl.step = 4
 
         self.result_is_win = True
         self.result_word = word
         self.result_level = level
-        self.result_meaning_en = meaning_en
         self.result_meaning_th = meaning_th
         self.result_score_earned = earned_score
-        self.result_reward_info = reward_desc
 
         if self.opt_sound_enabled:
             self.sound_mgr.play_victory()
@@ -405,10 +399,10 @@ class Game:
         )
         self.modal_ui.status_scroll = 0
         if possible:
-            word, level, meaning_en, meaning_th = possible[0]
+            word, level, _meaning_en, meaning_th = possible[0]
             self.modal_ui.auto_select_word(word)
             self.modal_ui.status_message = (
-                f"ช่วยเรียงคำ: {word} ({level}) — {meaning_th or meaning_en}"
+                f"ช่วยเรียงคำ: {word} ({level}) — {meaning_th or 'ยังไม่มีคำแปลไทย'}"
             )
             self.modal_ui.status_is_error = False
         else:
@@ -772,10 +766,8 @@ class Game:
                     self.result_is_win,
                     self.result_word,
                     self.result_level,
-                    self.result_meaning_en,
                     self.result_meaning_th,
                     self.result_score_earned,
-                    self.result_reward_info,
                     self.result_penalty_info,
                     retry_tutorial=self.is_interactive_tutorial
                     and not self.result_is_win,
