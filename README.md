@@ -1,33 +1,28 @@
 # LexiSnake — เกมงูเก็บตัวอักษรและสร้างคำศัพท์
 
-[![Build](https://github.com/BeelzebubCode/snake-game/actions/workflows/build.yml/badge.svg)](https://github.com/BeelzebubCode/snake-game/actions/workflows/build.yml)
+[![Download V 1.0.0](https://img.shields.io/badge/Download-V%201.0.0-43d9a3)](https://github.com/BeelzebubCode/snake-game/releases/tag/v1.0.0)
 
 บังคับงูเก็บตัวอักษร เข้าประตูเขียว แล้วเรียงเป็นคำภาษาอังกฤษเพื่อรับคะแนน มีคำศัพท์ระดับ CEFR A1–C2 พร้อมคำแปลไทย เล่นแบบออฟไลน์ได้หลังติดตั้งหรือดาวน์โหลดไฟล์เกม
 
 ## ดาวน์โหลดแล้วเล่น (ไม่ต้องติดตั้ง Python)
 
-ไฟล์เกมสำเร็จรูปอยู่ใน **GitHub Actions → Artifacts** ไม่ใช่ปุ่ม **Code → Download ZIP** ซึ่งดาวน์โหลดเฉพาะซอร์สโค้ด
+### [V 1.0.0 — Download](https://github.com/BeelzebubCode/snake-game/releases/tag/v1.0.0)
 
-1. เข้าสู่ระบบ GitHub แล้วเปิด [หน้า Build](https://github.com/BeelzebubCode/snake-game/actions/workflows/build.yml)
-2. เลือกรอบ build ล่าสุดของ branch `main` ที่สำเร็จ (เครื่องหมายถูกสีเขียว) ตรวจ commit ให้ตรงกับเวอร์ชันที่ต้องการ
-3. เลื่อนลงไปที่ **Artifacts** แล้วเลือกไฟล์ตรงกับระบบและชิปตามตาราง
-4. แตก ZIP ที่ GitHub ดาวน์โหลดให้ จะได้ archive ของเกมอีกชั้น จากนั้นแตก archive นั้นตามวิธีด้านล่าง
+เลือกดาวน์โหลดไฟล์เดียวให้ตรงกับเครื่อง ไม่ต้องเลือกจากประวัติ Actions และไม่ต้องเข้าสู่ระบบ GitHub
 
-| ระบบ | Artifact | ไฟล์เกมภายใน |
-| --- | --- | --- |
-| Windows x64 | `LexiSnake-Windows-x64` | `LexiSnake-Windows-x64.zip` → `LexiSnake/LexiSnake.exe` |
-| macOS Apple Silicon (M1/M2/M3/รุ่นใหม่กว่า) | `LexiSnake-macOS-arm64` | `LexiSnake-macOS-arm64.zip` → `LexiSnake.app` |
-| macOS Intel | `LexiSnake-macOS-x64` | `LexiSnake-macOS-x64.zip` → `LexiSnake.app` |
-| Linux x64 | `LexiSnake-Linux-x64` | `LexiSnake-Linux-x64.tar.gz` → `LexiSnake/LexiSnake` |
+| ระบบ | ดาวน์โหลด |
+| --- | --- |
+| Windows 64 บิต (x64) | [ดาวน์โหลด Windows](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-Windows-x64.zip) |
+| macOS ชิป Apple (M1 ขึ้นไป) | [ดาวน์โหลด macOS Apple Silicon](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-macOS-arm64.zip) |
+| macOS ชิป Intel | [ดาวน์โหลด macOS Intel](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-macOS-x64.zip) |
+| Linux 64 บิต (x64) | [ดาวน์โหลด Linux](https://github.com/BeelzebubCode/snake-game/releases/download/v1.0.0/LexiSnake-Linux-x64.tar.gz) |
 
-Artifact เก็บไว้ 30 วันตาม workflow นี้ หากไฟล์หมดอายุ เจ้าของ repository สามารถกด **Run workflow** เพื่อสร้างใหม่ หรือเล่นจากซอร์สตามหัวข้อถัดไปได้ ต้องเข้าสู่ระบบและมีสิทธิ์อ่าน repository จึงดาวน์โหลด Artifact ได้ ([คู่มือ GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts))
-
-> รอบ build เก่ามีชื่อ `LexiSnake-Windows`, `LexiSnake-macOS` หรือ `LexiSnake-Windows-Executable` ให้เลือกชื่อใหม่จากรอบล่าสุดเพื่อใช้ UI และกติกาปัจจุบัน การ push ไม่ได้สร้าง GitHub Release อัตโนมัติ
+> ปุ่ม **Source code** และ **Code → Download ZIP** เป็นซอร์สโค้ด ไม่ใช่ตัวเกมพร้อมเล่น
 
 ### Windows
 
 1. เลือก `LexiSnake-Windows-x64` สำหรับ Windows แบบ 64 บิต (x64)
-2. แตก ZIP ทั้งสองชั้นด้วย **Extract All**
+2. แตก ZIP ด้วย **Extract All**
 3. เปิด `LexiSnake.exe` ในโฟลเดอร์ `LexiSnake`
 4. เก็บโฟลเดอร์ `_internal` ไว้ข้างไฟล์ EXE เสมอ ห้ามย้ายเฉพาะ EXE ออกมา
 
@@ -35,8 +30,8 @@ Artifact เก็บไว้ 30 วันตาม workflow นี้ หา�
 
 ### macOS
 
-1. เปิด **Apple menu → About This Mac** ดูว่าเป็นชิป Apple หรือ Intel แล้วเลือก Artifact ให้ตรง
-2. แตก ZIP ทั้งสองชั้น จะได้ `LexiSnake.app`
+1. เปิด **Apple menu → About This Mac** ดูว่าเป็นชิป Apple หรือ Intel แล้วเลือกไฟล์ดาวน์โหลดให้ตรง
+2. แตก ZIP จะได้ `LexiSnake.app`
 3. ลากแอปไปยัง `Applications` หรือโฟลเดอร์ที่ต้องการ แล้วเปิดแอป
 
 ไฟล์ CI สร้างบน macOS 15 แยก Apple Silicon/Intel แนะนำ macOS 15 ขึ้นไป แอปยังไม่ได้ Developer ID signing/notarization จึงอาจถูก Gatekeeper เตือนหรือบล็อก อย่าปิดการป้องกันทั้งระบบ หากเปิดไม่ได้ให้ใช้วิธีรันจากซอร์สด้านล่าง
@@ -45,7 +40,7 @@ Artifact เก็บไว้ 30 วันตาม workflow นี้ หา�
 
 ไฟล์ CI เป็น x64 สร้างบน Ubuntu 22.04 เหมาะกับ Ubuntu 22.04 ขึ้นไปหรือระบบ glibc ที่เข้ากันได้ ไม่ใช่ไฟล์สำหรับ ARM หรือ Alpine/musl ต้องมี graphical desktop เพื่อเล่นเกม
 
-หลังแตก ZIP ชั้นแรก เปิด Terminal ในโฟลเดอร์ที่มี archive แล้วรัน:
+หลังดาวน์โหลด เปิด Terminal ในโฟลเดอร์ที่มี archive แล้วรัน:
 
 ```bash
 tar -xzf LexiSnake-Linux-x64.tar.gz

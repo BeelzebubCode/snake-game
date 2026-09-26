@@ -1,11 +1,9 @@
-name: Build LexiSnake (Windows, macOS, Linux)
+name: LexiSnake Download
+run-name: ${{ github.ref_name == 'v1.0.0' && 'V 1.0.0 — Download' || format('{0} — Download', github.ref_name) }}
 
 on:
   push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch:
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -70,3 +68,58 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
+
+  release:
+    name: Publish download
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - name: Download verified native archives
+        run: gh run download "$GITHUB_RUN_ID" --dir downloads
+
+      - name: Publish complete release
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          archives=(
+            downloads/LexiSnake-Windows-x64/LexiSnake-Windows-x64.zip
+            downloads/LexiSnake-macOS-arm64/LexiSnake-macOS-arm64.zip
+            downloads/LexiSnake-macOS-x64/LexiSnake-macOS-x64.zip
+            downloads/LexiSnake-Linux-x64/LexiSnake-Linux-x64.tar.gz
+          )
+          for archive in "${archives[@]}"; do test -s "$archive"; done
+          gh release create "$RELEASE_TAG" "${archives[@]}" --verify-tag --draft \
+            --title "V ${RELEASE_TAG#v} — Download" \
+            --notes 'ดาวน์โหลดไฟล์เกมด้านล่างให้ตรงกับเครื่อง ไม่ต้องติดตั้ง Python
+
+          - Windows 64 บิต: LexiSnake-Windows-x64.zip
+          - macOS ชิป Apple: LexiSnake-macOS-arm64.zip
+          - macOS ชิป Intel: LexiSnake-macOS-x64.zip
+          - Linux 64 บิต: LexiSnake-Linux-x64.tar.gz
+
+          แตกไฟล์แล้วเปิดตัวเกม อ่านวิธีเล่นและวิธีเปิดไฟล์แต่ละระบบใน README
+          Source code เป็นซอร์สสำหรับนักพัฒนา ไม่ใช่ตัวเกมพร้อมเล่น
+          แอปยังไม่ได้เซ็นรับรองผู้เผยแพร่ ไม่ควรปิดระบบป้องกันของเครื่อง'
+          test "$(gh release view "$RELEASE_TAG" --json assets --jq '.assets | length')" = 4
+          gh release edit "$RELEASE_TAG" --draft=false --latest
+
+      - name: Remove the eight obsolete runs after v1.0.0 is published
+        if: github.ref_name == 'v1.0.0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft')" = false
+          test "$(gh release view "$RELEASE_TAG" --json assets --jq '.assets | length')" = 4
+          # Explicit one-time allowlist; never deletes this run or future builds.
+          for run_id in 36223209858 36222727170 36222347231 36222065375 36221906783 34330100825 34330100773 34329848277; do
+            gh api --method DELETE "repos/$GH_REPO/actions/runs/$run_id"
+          done
