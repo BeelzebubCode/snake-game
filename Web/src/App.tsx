@@ -764,9 +764,6 @@ function GameScreen({
               เก็บใส่กระเป๋า +{CHESTS[s.reward.kind].count} <span>✓</span>
             </button>
           )}
-          <button className="text-button centered" onClick={() => engine.pause()}>
-            พักก่อน
-          </button>
         </Modal>
       )}
       {phase === 'revive' && s.reviveWord && (
