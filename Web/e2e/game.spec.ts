@@ -292,6 +292,67 @@ test('a portal word unlocks the next map and exit arrows follow accepted steerin
   expect(errors).toEqual([]);
 });
 
+test('portal typing and paste only use available letters, including duplicate counts and an empty bag', async ({
+  page,
+}) => {
+  let emptyBag = false;
+  await page.route('**/src/game/engine.ts*', async (route) => {
+    const response = await route.fetch();
+    const original = await response.text();
+    let body = original.replace('portal: null,', 'portal: { x: 10, y: 11, expiresAt: 60000 },');
+    const inventory = emptyBag ? '[]' : '["G", "O", "D", "P", "P", "C", "A", "T"]';
+    body = body.replace(
+      /inventory: tutorial \? \[\] : \[[\s\S]*?\],/,
+      'inventory: ' + inventory + ',',
+    );
+    expect(body.includes('inventory: ' + inventory + ',')).toBe(true);
+    await route.fulfill({ response, body });
+  });
+  const enterPortal = async () => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+    await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
+    await expect(page.locator('canvas')).toBeVisible();
+    await page.clock.runFor(3700);
+    await expect(page.getByRole('heading', { name: 'ประตูมิติต่างโลก' })).toBeVisible();
+  };
+  await page.clock.install();
+  await enterPortal();
+  const input = page.getByLabel('คำศัพท์ภาษาอังกฤษ', { exact: true });
+  await input.pressSequentially('good');
+  await expect(input).toHaveValue('GOD'); // Only one O is in the bag.
+  await input.pressSequentially('xyz');
+  await expect(input).toHaveValue('GOD');
+  await input.fill('');
+  await input.pressSequentially('ppp');
+  await expect(input).toHaveValue('PP'); // Two P tiles, not three.
+  await input.press('Backspace');
+  await expect(input).toHaveValue('P');
+  await page.getByRole('button', { name: 'เลือก P', exact: true }).last().click();
+  await expect(input).toHaveValue('PP');
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await input.press('Control+a');
+  await page.evaluate(() => navigator.clipboard.writeText('cat'));
+  await input.press('Control+v');
+  await expect(input).toHaveValue('CAT');
+  await input.press('Control+a');
+  await page.evaluate(() => navigator.clipboard.writeText('GOOD'));
+  await input.press('Control+v');
+  await expect(input).toHaveValue('CAT'); // Reject an invalid paste as a whole.
+  await input.evaluate((node) => (node as HTMLInputElement).setSelectionRange(1, 2));
+  await input.press('p');
+  await expect(input).toHaveValue('CPT');
+  await input.fill('CAT');
+  await page.getByRole('button', { name: 'ส่งคำศัพท์' }).click();
+  await expect(page.getByTestId('score')).toHaveText('450');
+  emptyBag = true;
+  await enterPortal();
+  await expect(input).toHaveAttribute('readonly', '');
+  await input.pressSequentially('cat');
+  await expect(input).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'ส่งคำศัพท์' })).toBeDisabled();
+});
+
 test('settings sidebar keeps drafts across categories and cancels without saving on mobile', async ({
   page,
 }) => {

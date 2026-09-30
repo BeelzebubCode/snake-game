@@ -6,7 +6,7 @@ import TutorialLesson from './components/TutorialLesson';
 import TutorialReview from './components/TutorialReview';
 import { LESSONS } from './game/tutorial';
 import SettingsPanel from './components/SettingsPanel';
-import { loadDictionary } from './data/vocabulary';
+import { canBuild, loadDictionary } from './data/vocabulary';
 import { GameEngine } from './game/engine';
 import PhaserBoard from './game/PhaserBoard';
 import { DIRECTION_LABELS, SKINS, hex, mapFor } from './game/appearance';
@@ -599,9 +599,20 @@ function GameScreen({
               autoCapitalize="characters"
               spellCheck={false}
               maxLength={24}
-              placeholder={s.tutorial ? 'CAT' : 'พิมพ์คำศัพท์ที่นี่'}
+              readOnly={s.inventory.length === 0}
+              placeholder={
+                s.inventory.length === 0
+                  ? 'ยังไม่มีอักษรในกระเป๋า'
+                  : s.tutorial
+                    ? 'CAT'
+                    : 'พิมพ์คำศัพท์ที่นี่'
+              }
+              aria-describedby="word-input-help"
               value={draft}
-              onChange={(e) => setDraft(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))}
+              onChange={(e) => {
+                const next = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+                if (canBuild(next, s.inventory)) setDraft(next);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {
                   e.preventDefault();
@@ -609,6 +620,9 @@ function GameScreen({
                 }
               }}
             />
+            <p id="word-input-help" className="subtle">
+              พิมพ์ได้เฉพาะอักษรที่มีในกระเป๋า ใช้ซ้ำได้ตามจำนวนที่เก็บมา
+            </p>
             <div className="challenge-inventory" aria-label="เลือกตัวอักษร">
               {s.inventory.map((letter, i) => {
                 currentCounts[letter] = (currentCounts[letter] ?? 0) + 1;
@@ -618,8 +632,12 @@ function GameScreen({
                     key={i}
                     className={'letter-tile ' + (selected ? 'selected' : '')}
                     type="button"
-                    disabled={selected}
-                    onClick={() => setDraft((d) => d + letter)}
+                    disabled={selected || draft.length >= 24}
+                    onClick={() =>
+                      setDraft((d) =>
+                        d.length < 24 && canBuild(d + letter, s.inventory) ? d + letter : d,
+                      )
+                    }
                     aria-label={'เลือก ' + letter}
                   >
                     {letter}

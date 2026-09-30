@@ -72,7 +72,7 @@ npm run format:check
 
 Browser tests ใช้ Chrome ที่ติดตั้งในเครื่อง ถ้าใช้ CI ให้ติดตั้ง Chromium ของ Playwright ด้วยคำสั่ง npx playwright install --with-deps chromium แล้วรันโดยกำหนด CI=true
 
-มี unit tests 38 ข้อสำหรับกติกา/เซฟ/การเคลื่อนที่/แมพ และ browser tests 9 เส้นทาง: Home/settings, tutorial ครบ 7 ขั้น, ปุ่มควบคุมบทสอนบนมือถือ, mobile layout, revival, เดินไปเปิดกล่องเงินจริง, เซฟรูปลักษณ์ เปลี่ยนแมพพร้อมลูกศรหลังออกประตู และ sidebar ตั้งค่าบนมือถือ ชุดทดสอบกำหนด RNG ของเกมผ่าน network fixture โดยไม่เพิ่ม debug controls ลงใน production
+มี unit tests 38 ข้อสำหรับกติกา/เซฟ/การเคลื่อนที่/แมพ และ browser tests 10 เส้นทาง: Home/settings, tutorial ครบ 7 ขั้น, ปุ่มควบคุมบทสอนบนมือถือ, mobile layout, revival, เดินไปเปิดกล่องเงินจริง, เซฟรูปลักษณ์ เปลี่ยนแมพพร้อมลูกศรหลังออกประตู sidebar ตั้งค่าบนมือถือ และการพิมพ์/วางคำตามจำนวนอักษรในกระเป๋า ชุดทดสอบกำหนด RNG ของเกมผ่าน network fixture โดยไม่เพิ่ม debug controls ลงใน production
 
 ตรวจภาพ Home บน desktop/mobile และสนาม desktop ด้วย Chrome แล้ว ยังไม่ได้ทดสอบ Safari หรือการสัมผัสบนอุปกรณ์จริง เสียงอ่านขึ้นกับเสียงที่เบราว์เซอร์/ระบบปฏิบัติการมี
 
