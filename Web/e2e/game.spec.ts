@@ -44,10 +44,10 @@ test('a beginner learns steering, Shift, letters, chests and the portal with ill
   await page.keyboard.press('w');
   await page.clock.runFor(400);
   await expect(page.getByRole('complementary', { name: 'เป้าหมายบทสอน' })).toBeVisible();
-  await page.clock.runFor(900);
+  await page.clock.runFor(250);
   for (const key of ['a', 's', 'd']) {
     await page.keyboard.press(key);
-    await page.clock.runFor(1300);
+    await page.clock.runFor(650);
   }
   await expect(page.getByRole('heading', { name: 'ลองครบทั้ง 4 ทิศแล้ว' })).toBeVisible();
   await page.clock.runFor(2000);
@@ -127,7 +127,7 @@ test('mobile tutorial can turn and hold the on-screen boost button', async ({ pa
   await page.clock.runFor(3100);
   for (const name of ['เลี้ยวขึ้น', 'เลี้ยวซ้าย', 'เลี้ยวลง', 'เลี้ยวขวา']) {
     await page.getByRole('button', { name, exact: true }).click();
-    await page.clock.runFor(1300);
+    await page.clock.runFor(650);
   }
   await page.getByRole('button', { name: 'พร้อมแล้ว ไปฝึกเร่งความเร็ว' }).click();
   await page.getByRole('button', { name: 'ลองเร่งความเร็ว' }).click();

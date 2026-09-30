@@ -40,14 +40,17 @@ describe('session and motion', () => {
     expect(s.phase).toBe('countdown');
     expect(s.letters).toHaveLength(3);
   });
-  it('counts down before moving, then moves five cells per second', () => {
-    const e = make(),
-      x = e.state.snake[0].x;
-    advance(e, 3000);
-    expect(e.state.phase).toBe('playing');
-    expect(e.state.snake[0].x).toBe(x);
-    advance(e, 1000);
-    expect(e.state.snake[0].x).toBe(x + 5);
+  it('uses the Python slow speed of six cells per second in normal play and tutorial', () => {
+    for (const tutorial of [false, true]) {
+      const e = new GameEngine({ ...DEFAULT_SETTINGS }, tutorial, () => 0.3, new Vocabulary());
+      if (tutorial) e.startLesson();
+      const x = e.state.snake[0].x;
+      advance(e, 3000);
+      expect(e.state.phase).toBe('playing');
+      expect(e.state.snake[0].x).toBe(x);
+      advance(e, 1000);
+      expect(e.state.snake[0].x).toBe(x + 6);
+    }
   });
   it('buffers valid turns without accepting a direct reversal', () => {
     const e = playing(make());
@@ -293,10 +296,10 @@ describe('beginner tutorial', () => {
     advance(e, 400);
     expect(e.state.lesson).toBe(0);
     expect(e.state.practicedDirections).toEqual([]);
-    advance(e, 800);
+    advance(e, 250);
     for (const direction of ['left', 'down', 'right'] as const) {
       e.turn(direction);
-      advance(e, 1200);
+      advance(e, 650);
     }
     expect(e.state.practicedDirections).toEqual(['up', 'left', 'down', 'right']);
     expect(e.state.phase).toBe('lessonReview');

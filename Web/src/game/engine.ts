@@ -115,9 +115,7 @@ export class GameEngine {
     return this.state.phase === 'playing' ? Math.min(1, this.moveAccumulator / this.interval) : 1;
   }
   private get interval() {
-    const speed =
-      this.state.tutorial && this.state.lesson === 0 ? 2.5 : SPEEDS[this.state.settings.speed];
-    return 1000 / (speed * (this.boosted ? 1.7 : 1));
+    return 1000 / (SPEEDS[this.state.settings.speed] * (this.boosted ? 1.7 : 1));
   }
   setBoost(value: boolean) {
     const progress = this.moveAccumulator / this.interval;

@@ -110,7 +110,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sound: true,
   reducedMotion: false,
 };
-export const SPEEDS: Record<Speed, number> = { slow: 5, normal: 8, fast: 12, expert: 16 };
+export const SPEEDS: Record<Speed, number> = { slow: 6, normal: 8, fast: 12, expert: 16 };
 export const CHESTS: Record<
   ChestKind,
   { title: string; count: number; color: string; weight: number }
