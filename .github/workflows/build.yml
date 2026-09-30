@@ -3,7 +3,7 @@ run-name: V 1.0.1 — Download
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v1.*']
 
 permissions:
   contents: read

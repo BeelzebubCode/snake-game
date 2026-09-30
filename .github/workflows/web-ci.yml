@@ -1,0 +1,57 @@
+name: Web CI
+on:
+  push:
+    branches: ['**']
+    paths: ['Web/**', '.github/workflows/web-ci.yml']
+  pull_request:
+    paths: ['Web/**', '.github/workflows/web-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: web-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    name: Check web game
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Web
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Web/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check formatting
+        run: npm run format:check
+      - name: Test game rules and saved settings
+        run: npm test
+      - name: Build production site
+        run: npm run build
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Test browser flows
+        run: npm run test:e2e
+      - name: Save browser failure details
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-failure-details
+          path: Web/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Save production build
+        uses: actions/upload-artifact@v7
+        with:
+          name: lexisnake-web
+          path: Web/dist/
+          retention-days: 7
+          if-no-files-found: error

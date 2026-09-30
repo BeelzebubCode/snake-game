@@ -1,0 +1,230 @@
+import { test, expect } from '@playwright/test';
+test('Home, settings, returning-player flow, and wide board', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('เล่นทีละนิด');
+  await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
+  await expect(page.getByLabel('ความเร็วเจ้างู')).toHaveValue('slow');
+  await expect(page.getByLabel('เวลาในประตูมิติต่างโลก')).toHaveValue('60');
+  await page.getByLabel('เวลาในประตูมิติต่างโลก').selectOption('90');
+  await page.getByRole('button', { name: 'บันทึกการตั้งค่า' }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
+  await expect(page.getByLabel('เวลาในประตูมิติต่างโลก')).toHaveValue('90');
+  await page.getByRole('button', { name: 'ปิด', exact: true }).click();
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await expect(page.getByRole('heading', { name: 'เคยมาเดินเล่นที่นี่หรือยัง?' })).toBeVisible();
+  await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
+  await expect(page.locator('canvas')).toBeVisible();
+  const box = await page.getByTestId('game-board').boundingBox();
+  expect(box!.width).toBeGreaterThan(1300);
+  await expect(page.getByRole('img', { name: 'ฟื้นคืนชีพได้อีก 3 ครั้ง' })).toBeVisible();
+  await page.getByRole('button', { name: 'พักเกม', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'พักในสวนสักครู่' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+test('a beginner can complete the actual interactive tutorial', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await page.getByRole('button', { name: /มือใหม่ ขอฝึกก่อน/ }).click();
+  await expect(page.locator('canvas')).toBeVisible();
+  await page.clock.install();
+  await page.getByRole('button', { name: 'เริ่มเก็บตัวอักษร' }).click();
+  await page.clock.runFor(4100);
+  await expect(page.getByRole('heading', { name: 'ประตูสู่โลกคำศัพท์' })).toBeVisible();
+  await page.getByRole('button', { name: 'ลองเข้าประตูกัน' }).click();
+  await page.clock.runFor(4500);
+  await expect(page.getByRole('heading', { name: 'ประตูมิติต่างโลก' })).toBeVisible();
+  await page.getByLabel('คำศัพท์ภาษาอังกฤษ', { exact: true }).fill('CAT');
+  await page.getByRole('button', { name: 'ส่งคำศัพท์' }).click();
+  await expect(page.getByText('แมว', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('score')).toHaveText('450');
+  await page.getByRole('button', { name: 'จบบทเรียน' }).click();
+  await expect(page.getByRole('heading', { name: 'พร้อมออกผจญภัยแล้ว!' })).toBeVisible();
+  await page.getByRole('button', { name: 'กลับ Home แล้วเริ่มเล่นกัน' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+test('mobile Home and play controls fit the viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
+  await expect(page.getByRole('button', { name: 'เลี้ยวขึ้น' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'เลี้ยวขวา' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('revival spends one heart, clamps the score, and preserves its timer on pause', async ({
+  page,
+}) => {
+  await page.route('**/src/game/engine.ts', async (route) => {
+    const response = await route.fetch();
+    const original = await response.text();
+    const body = original.replace('random = Math.random', 'random = () => 0');
+    expect(body).not.toBe(original);
+    await route.fulfill({ response, body });
+  });
+  await page.goto('/');
+  await page.clock.install();
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
+  await expect(page.locator('canvas')).toBeVisible();
+  await page.clock.runFor(10500);
+  await expect(page.getByRole('heading', { name: 'ให้เจ้างูลองอีกครั้งไหม?' })).toBeVisible();
+  await page.getByLabel('คำตอบฟื้นคืนชีพ').fill('wrong');
+  await page.getByRole('button', { name: 'ตอบเพื่อฟื้นคืนชีพ' }).click();
+  await expect(page.getByText('ยังไม่ถูก ลองสะกดอีกครั้งได้เลย')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'ฟื้นคืนชีพได้อีก 3 ครั้ง' })).toBeVisible();
+  await page.getByLabel('คำตอบฟื้นคืนชีพ').fill('cat');
+  await page.getByRole('button', { name: 'พักก่อน', exact: true }).click();
+  await page.clock.runFor(10000);
+  await page.getByRole('button', { name: 'เล่นต่อ', exact: false }).click();
+  await expect(page.getByLabel('คำตอบฟื้นคืนชีพ')).toHaveValue('cat');
+  await page.getByRole('button', { name: 'ตอบเพื่อฟื้นคืนชีพ' }).click();
+  await expect(page.getByRole('img', { name: 'ฟื้นคืนชีพได้อีก 2 ครั้ง' })).toBeVisible();
+  await expect(page.getByTestId('score')).toHaveText('0');
+});
+test('collects a silver chest through movement and claims two letters', async ({ page }) => {
+  await page.route('**/src/game/engine.ts', async (route) => {
+    const response = await route.fetch();
+    const original = await response.text();
+    const body = original.replace('random = Math.random', 'random = () => 0');
+    expect(body).not.toBe(original);
+    await route.fulfill({ response, body });
+  });
+  await page.goto('/');
+  await page.clock.install();
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
+  await expect(page.locator('canvas')).toBeVisible();
+  await page.clock.runFor(7460);
+  await page.keyboard.press('ArrowUp');
+  await page.clock.runFor(2000);
+  await page.keyboard.press('ArrowLeft');
+  await page.clock.runFor(7000);
+  await expect(page.getByRole('heading', { name: 'ของขวัญของคุณมาแล้ว!' })).toBeVisible();
+  await expect(page.locator('.reward-letters .letter-tile')).toHaveCount(2);
+  await page.getByRole('button', { name: 'เก็บใส่กระเป๋า +2' }).click();
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(5);
+});
+
+test('appearance settings persist and reach the game renderer', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
+  await page.getByRole('tab', { name: 'ตัวงู', exact: true }).click();
+  await page.getByRole('button', { name: 'Cyber Purple', exact: true }).click();
+  await page.getByLabel('รูปแบบตัวงู').selectOption('classic');
+  await page.getByRole('tab', { name: 'แมพและสนาม', exact: true }).click();
+  await page.getByLabel('แมพพื้นหลัง').selectOption('ocean');
+  await page.getByLabel('แสดงเส้นตาราง').uncheck();
+  await page.getByRole('button', { name: 'บันทึกการตั้งค่า' }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
+  await page.getByRole('tab', { name: 'ตัวงู', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Cyber Purple', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByLabel('รูปแบบตัวงู')).toHaveValue('classic');
+  await page.getByRole('tab', { name: 'แมพและสนาม', exact: true }).click();
+  await expect(page.getByLabel('แมพพื้นหลัง')).toHaveValue('ocean');
+  await expect(page.getByLabel('แสดงเส้นตาราง')).not.toBeChecked();
+  await page.getByRole('button', { name: 'ปิด', exact: true }).click();
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
+  await expect(page.locator('canvas')).toHaveAttribute('data-map', 'ocean');
+  await expect(page.locator('canvas')).toHaveAttribute('data-skin', 'purple');
+  await expect(page.locator('canvas')).toHaveAttribute('data-grid', 'false');
+  await expect(page.locator('.map-badge')).toHaveText('Midnight Ocean');
+});
+test('a portal word unlocks the next map and exit arrows follow accepted steering', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  // Seed a near-threshold round and a gate ahead using the served module only.
+  await page.route('**/src/game/engine.ts', async (route) => {
+    const response = await route.fetch();
+    const original = await response.text();
+    let body = original.replace('random = Math.random', 'random = () => 0');
+    body = body.replace('score: 0,', 'score: 1050,');
+    body = body.replace('portal: null,', 'portal: { x: 10, y: 11, expiresAt: 60000 },');
+    expect(body).toContain('score: 1050,');
+    expect(body).toContain('portal: { x: 10, y: 11, expiresAt: 60000 },');
+    await route.fulfill({ response, body });
+  });
+  await page.goto('/');
+  await page.clock.install();
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
+  await expect(page.locator('canvas')).toHaveAttribute('data-map', 'midnight');
+  await page.clock.runFor(3700);
+  await expect(page.getByRole('heading', { name: 'ประตูมิติต่างโลก' })).toBeVisible();
+  await page.getByLabel('คำศัพท์ภาษาอังกฤษ', { exact: true }).fill('CAT');
+  await page.getByRole('button', { name: 'ส่งคำศัพท์' }).click();
+  await expect(page.getByTestId('score')).toHaveText('1,500');
+  await page.getByRole('button', { name: /กลับไปเดินเล่นต่อ/ }).click();
+  const arrow = page.getByTestId('direction-preview');
+  await expect(arrow).toHaveAttribute('aria-label', 'ทิศทางถัดไป ขวา');
+  await page.keyboard.press('ArrowUp');
+  await expect(arrow).toHaveAttribute('aria-label', 'ทิศทางถัดไป ขึ้น');
+  await page.keyboard.press('ArrowLeft');
+  await expect(arrow).toHaveAttribute('aria-label', 'ทิศทางถัดไป ขึ้น');
+  await page.keyboard.press('ArrowDown');
+  await expect(arrow).toHaveAttribute('aria-label', 'ทิศทางถัดไป ลง');
+  await page.clock.runFor(3200);
+  await expect(arrow).toHaveCount(0);
+  await expect(page.locator('canvas')).toHaveAttribute('data-map', 'forest');
+  await expect(page.locator('.map-badge')).toHaveText('Firefly Forest');
+  expect(errors).toEqual([]);
+});
+
+test('settings sidebar keeps drafts across categories and cancels without saving on mobile', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(page.getByRole('tab', { name: 'การเล่น', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.getByLabel('ความเร็วเจ้างู').selectOption('fast');
+  await page.getByRole('tab', { name: 'ตัวงู', exact: true }).click();
+  await page.getByRole('button', { name: 'Golden Fire', exact: true }).click();
+  await page.getByRole('tab', { name: 'แมพและสนาม', exact: true }).click();
+  await page.getByLabel('แมพพื้นหลัง').selectOption('volcano');
+  await page.getByRole('tab', { name: 'เสียงและเอฟเฟกต์', exact: true }).click();
+  await page.getByLabel('เสียงเอฟเฟกต์และเสียงอ่าน').uncheck();
+  await page.getByRole('tab', { name: 'การเล่น', exact: true }).click();
+  await expect(page.getByLabel('ความเร็วเจ้างู')).toHaveValue('fast');
+  const sidebar = await page.locator('.settings-sidebar').boundingBox();
+  const content = await page.locator('.settings-content').boundingBox();
+  expect(sidebar!.x + sidebar!.width).toBeLessThanOrEqual(content!.x + 1);
+  const save = await page.getByRole('button', { name: 'บันทึกการตั้งค่า' }).boundingBox();
+  expect(save!.y + save!.height).toBeLessThan(844);
+  expect(await dialog.evaluate((d) => d.scrollWidth <= d.clientWidth)).toBe(true);
+  await page.getByRole('tab', { name: 'การเล่น', exact: true }).focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('tab', { name: 'ตัวงู', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Golden Fire', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'ยกเลิก', exact: true }).click();
+  await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
+  await expect(page.getByLabel('ความเร็วเจ้างู')).toHaveValue('slow');
+  await page.getByRole('tab', { name: 'ตัวงู', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Neon Mint', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+});

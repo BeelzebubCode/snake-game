@@ -1,0 +1,36 @@
+{
+  "name": "lexisnake-web",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "data:build": "node scripts/build-vocabulary.mjs",
+    "format": "prettier --write src tests e2e scripts *.ts *.json index.html",
+    "format:check": "prettier --check src tests e2e scripts *.ts *.json index.html",
+    "verify": "npm run format:check && npm test && npm run build"
+  },
+  "dependencies": {
+    "phaser": "4.2.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "26.6.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "prettier": "3.9.9",
+    "typescript": "7.0.2",
+    "vite": "8.3.1",
+    "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": ">=22.12.0 <23"
+  }
+}

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>LexiSnake V2 · Cozy garden concept</title>
+<style>
+@font-face{font-family:Noto;src:url('../data/fonts/NotoSansThai-Regular.ttf');font-display:swap}
+@font-face{font-family:Noto;src:url('../data/fonts/NotoSansThai-Bold.ttf');font-weight:700;font-display:swap}
+*{box-sizing:border-box}
+:root{--bg:#f7f5ed;--paper:#fffefa;--ink:#293d32;--muted:#637365;--line:#e3e6d9;--accent:#416b51;--soft:#e6efdf;--snake:#a7c99e;--head:#80ae81;--board:#eef2e5;--peach:#f5cfac;--lavender:#dad0ec}
+body[data-theme="lavender"]{--bg:#f7f3fa;--paper:#fffcff;--ink:#493c57;--muted:#766782;--line:#e9dfef;--accent:#755888;--soft:#eee4f5;--snake:#cbb7dd;--head:#b398c9;--board:#f1eaf6}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 Noto,system-ui,sans-serif}
+button,select{font:inherit}button{cursor:pointer;color:inherit}
+button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #936638;outline-offset:4px}
+button:disabled{cursor:default;opacity:.45}a{color:var(--accent);text-underline-offset:4px}
+.shell{max-width:1380px;margin:auto;padding:25px 44px 20px}
+header{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}.brand svg{width:48px;height:48px}
+.brand-name{font-size:25px;font-weight:700;line-height:1.2;letter-spacing:-1px}
+.brand small{color:var(--muted);letter-spacing:2px;font:10px/1.2 system-ui,sans-serif}
+.top-note{color:var(--muted);font-size:12px}
+.tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:30px;padding:7px 14px;font-size:12px;background:var(--paper);gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:28px 0 23px}
+.eyebrow{color:var(--accent);font:700 10px/1.5 system-ui,sans-serif;letter-spacing:2px;text-transform:uppercase}
+h1{font-size:clamp(24px,3vw,35px);margin:6px 0 0;line-height:1.5;letter-spacing:-.8px}
+p{margin:5px 0 0;color:var(--muted)}
+.theme-control{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+select{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:12px;min-height:44px;padding:7px 12px}
+.game-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:22px;align-items:start}
+.arena{background:var(--paper);border:1px solid var(--line);padding:20px;border-radius:26px;box-shadow:0 10px 36px #425d3410}
+.arena-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:17px;gap:16px}
+.stats{display:flex;gap:30px}.stat span{display:block;font-size:11px;color:var(--muted)}
+.stat strong{font:700 24px/1.3 system-ui,sans-serif;letter-spacing:-.6px}.stat small{font-size:12px;font-weight:400}
+.icon-btn{border:1px solid var(--line);border-radius:12px;background:var(--bg);min-width:44px;min-height:44px;padding:8px 12px}
+.board{position:relative;overflow:hidden;border-radius:18px;background:var(--board);border:1px solid var(--line)}
+.board svg{display:block;width:100%;height:auto;max-height:540px}
+.board-watermark{position:absolute;top:15px;left:17px;font:700 10px/1.5 system-ui,sans-serif;letter-spacing:2px;color:var(--muted)}
+.board-caption{position:absolute;bottom:14px;left:14px;right:14px;text-align:center;font-size:11px;color:var(--muted)}
+.snake-body{fill:var(--snake)}.snake-head{fill:var(--head)}
+.board-art text{fill:var(--ink);font-family:Noto,sans-serif;font-weight:700}
+.portal-halo{transform-origin:531px 154px;animation:breathe 3.5s ease-in-out infinite}
+.letter-float{animation:float 3s ease-in-out infinite}.letter-float.second{animation-delay:-1.4s}
+.arena-bottom{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:11px;padding-top:15px}
+kbd{display:inline-block;padding:1px 5px;margin-right:3px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--bg);font:11px/1.6 system-ui,sans-serif}
+.sidebar{display:grid;gap:15px}
+.card{border-radius:22px;background:var(--paper);border:1px solid var(--line);padding:20px}
+.card h2{font-size:16px;margin:0}.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.count{color:var(--muted);font-size:12px}.garden-card{background:var(--soft)}.garden-card .eyebrow{margin-bottom:8px}.garden-card p{font-size:13px}
+.progress{height:6px;border-radius:6px;background:#ffffffa0;margin:15px 0 7px;overflow:hidden}
+.progress div{width:66%;height:100%;border-radius:inherit;background:var(--accent)}
+.progress-caption{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.tile{display:grid;place-items:center;min-height:43px;border-radius:11px;background:#f8e5ce;color:#614a36;border:1px solid #edcfac;box-shadow:0 3px 0 #e8d2b7;font:700 19px/1.2 system-ui,sans-serif}
+.tile:nth-child(3n+2){background:#ece4f4;border-color:#d9cde4;box-shadow:0 3px 0 #dbd1e3;color:#655274}
+.tile:nth-child(3n){background:#e6eedc;border-color:#d1dec4;box-shadow:0 3px 0 #cfdcc4;color:#4e6748}
+.card .helper{font-size:11px;margin-top:13px}
+.word-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.word-row:last-child{border:0;padding-bottom:0}
+.word-row strong{font:700 14px/1.5 system-ui,sans-serif;letter-spacing:1px}.word-row span{font-size:12px;color:var(--muted)}
+.experiment{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:21px}
+.btn{min-height:44px;border:1px solid var(--line);background:var(--paper);padding:10px 18px;border-radius:13px;font-size:13px;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px #293d3210}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.toggle{margin-left:auto;min-height:44px;display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer}
+input[type="checkbox"]{accent-color:var(--accent);width:17px;height:17px}
+.status{min-height:27px;font-size:12px;color:var(--accent);margin-top:9px}
+footer{display:flex;justify-content:space-between;gap:16px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+.floating-letter{position:absolute;left:47%;top:38%;font:700 25px system-ui,sans-serif;color:var(--accent);pointer-events:none;animation:score-up 1s ease-out forwards}
+.spark{position:absolute;left:49%;top:46%;width:8px;height:8px;border-radius:50%;background:var(--peach);pointer-events:none;animation:sparkle .8s ease-out forwards}
+.tile.new{animation:pop .4s ease-out}
+.pause-cover{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;gap:12px;background:#f7f5eddf;backdrop-filter:blur(5px)}
+.pause-cover h2{margin:0;font-size:26px}.pause-cover p{font-size:13px}
+[hidden]{display:none!important}
+dialog{color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:28px;padding:30px;width:min(470px,calc(100% - 30px));box-shadow:0 24px 100px #293d3225}
+dialog::backdrop{background:#364b3e55;backdrop-filter:blur(5px)}
+.dialog-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+dialog h2{margin:14px 0 4px;font-size:25px}dialog p{font-size:13px}
+.answer{display:flex;justify-content:center;gap:9px;margin:27px 0 25px}
+.answer .tile{width:63px;height:69px;font-size:28px}
+.dialog-actions{display:grid;gap:10px;margin-top:23px}
+#word-result{margin-top:15px;text-align:center;min-height:26px;color:var(--accent)}
+.caption-label{color:var(--muted);font-size:11px;margin-top:10px}
+@keyframes float{50%{translate:0 -4px}}
+@keyframes breathe{50%{opacity:.45;scale:1.05}}
+@keyframes pop{0%{scale:.7}60%{scale:1.13}100%{scale:1}}
+@keyframes score-up{to{translate:0 -50px;opacity:0}}
+@keyframes sparkle{to{translate:var(--dx) var(--dy);opacity:0;scale:.3}}
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media(max-width:950px){.shell{padding:22px}.game-layout{grid-template-columns:minmax(0,1fr) 250px;gap:15px}.arena{padding:15px}.card{padding:16px}.stats{gap:20px}}
+@media(max-width:720px){.shell{padding:17px}.top-note{display:none}header{gap:10px}.brand-name{font-size:21px}.tag{font-size:10px;padding:6px 10px}.intro{align-items:start;margin:23px 0 18px}.intro p{font-size:12px}.theme-control{font-size:10px}select{max-width:138px;font-size:11px}.game-layout{grid-template-columns:1fr}.sidebar{grid-template-columns:1fr 1fr}.recent{grid-column:1/-1}.recent .word-row{display:inline-flex;width:48%;padding-right:16px;border:0}.arena-bottom{flex-wrap:wrap}.toggle{margin-left:0}footer{flex-direction:column;gap:5px}}
+@media(max-width:390px){.sidebar{grid-template-columns:1fr}.stats{gap:14px}.stat strong{font-size:20px}.intro{flex-direction:column;gap:10px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="16" fill="#e2edd8"/><path d="M14 31h12a6 6 0 0 0 0-12h-5" fill="none" stroke="#83ab77" stroke-width="10" stroke-linecap="round"/><ellipse cx="19" cy="19" rx="9" ry="7" fill="#83ab77"/><circle cx="16" cy="17" r="1.4" fill="#293d32"/><circle cx="22" cy="17" r="1.4" fill="#293d32"/><path d="M17 21q2 2 4 0" fill="none" stroke="#293d32" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <div><div class="brand-name">lexisnake<span style="color:var(--accent)">.</span></div><small>A LITTLE WORD ADVENTURE</small></div>
+  </div>
+  <span class="top-note">เก็บทีละตัว เรียนรู้ทีละคำ</span>
+  <span class="tag"><i class="dot"></i> V2 · ตัวอย่างการออกแบบ</span>
+</header>
+<section class="intro" aria-labelledby="page-title">
+  <div><div class="eyebrow">THE WORD GARDEN / 01</div><h1 id="page-title">ปล่อยคำศัพท์ให้งอกงาม 🌱</h1><p>สวนเล็ก ๆ ของเจ้างู กับคำใหม่ที่รอให้ค้นพบ</p></div>
+  <label class="theme-control">บรรยากาศของสวน<select id="theme"><option value="sage">Sage garden · เขียวเสจ</option><option value="lavender">Lavender · ม่วงนุ่ม</option></select></label>
+</section>
+<main>
+<div class="game-layout">
+<section class="arena" aria-label="ตัวอย่างสนามเกม Classic">
+  <div class="arena-top">
+    <div class="stats"><div class="stat"><span>คะแนนตัวอย่าง</span><strong id="score">1,350</strong></div><div class="stat"><span>คำที่ค้นพบ</span><strong id="word-count">3 <small>คำ</small></strong></div><div class="stat"><span>ระดับศัพท์</span><strong>A1</strong></div></div>
+    <button class="icon-btn" id="pause" aria-label="พักภาพตัวอย่าง" aria-pressed="false">Ⅱ</button>
+  </div>
+  <div class="board" id="board">
+    <span class="board-watermark">CLASSIC · COZY GARDEN</span>
+    <svg class="board-art" viewBox="0 0 728 624" role="img" aria-label="สนามกริด 28 คูณ 24 ช่อง มีงูสีพาสเทล ตัวอักษร และซุ้มประตูสวน">
+      <defs><pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" fill="none" stroke="currentColor" stroke-opacity=".045"/></pattern><filter id="tile-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#637365" flood-opacity=".13"/></filter></defs>
+      <rect width="728" height="624" fill="url(#grid)"/>
+      <g opacity=".55" fill="#c4d5b6"><path d="M70 527q-16-29-27-21 2 21 27 21M70 527q-1-30 17-31 9 21-17 31"/><path d="M646 458q-15-26-24-18 2 19 24 18M646 458q0-27 15-27 8 18-15 27"/><ellipse cx="124" cy="127" rx="5" ry="3"/><ellipse cx="630" cy="251" rx="6" ry="3"/></g>
+      <g stroke="#bacba9" stroke-width="2" stroke-linecap="round" opacity=".7"><path d="M103 420v-12m0 6-5-4m5 7 5-4M613 527v-12m0 6-5-4m5 7 5-4M420 100v-12m0 6-5-4m5 7 5-4"/></g>
+      <g fill="#f5cfac"><circle cx="150" cy="490" r="4"/><circle cx="155" cy="485" r="4"/><circle cx="160" cy="490" r="4"/><circle cx="155" cy="495" r="4"/></g><circle cx="155" cy="490" r="3" fill="#b7a070"/>
+      <g class="portal-halo"><circle cx="531" cy="154" r="62" fill="#bfd6ae" opacity=".24"/><circle cx="531" cy="154" r="49" fill="none" stroke="#9fbd8e" stroke-dasharray="3 9"/></g>
+      <path d="M503 179v-42a28 28 0 0 1 56 0v42" fill="#c2d8b1" stroke="#749b69" stroke-width="6"/>
+      <path d="M513 177v-39a18 18 0 0 1 36 0v39" fill="#f7faef" opacity=".8"/>
+      <g fill="#f4d4c4"><circle cx="504" cy="139" r="6"/><circle cx="513" cy="116" r="6"/><circle cx="551" cy="123" r="6"/></g>
+      <text x="531" y="211" text-anchor="middle" font-size="12">ประตูเรียงคำ</text>
+      <g class="letter-float" filter="url(#tile-shadow)"><rect x="354" y="287" width="36" height="36" rx="11" fill="#f5cfac" stroke="#dfb58d"/><text x="372" y="313" text-anchor="middle" font-size="22">C</text></g>
+      <g class="letter-float second" filter="url(#tile-shadow)"><rect x="183" y="157" width="36" height="36" rx="11" fill="#ded2ec" stroke="#c5b4d6"/><text x="201" y="183" text-anchor="middle" font-size="22">A</text></g>
+      <g class="letter-float" filter="url(#tile-shadow)"><rect x="478" y="417" width="36" height="36" rx="11" fill="#f5dfac" stroke="#dcc18c"/><text x="496" y="443" text-anchor="middle" font-size="22">T</text></g>
+      <g class="letter-float second" filter="url(#tile-shadow)"><rect x="572" y="313" width="36" height="36" rx="11" fill="#ded2ec" stroke="#c5b4d6"/><text x="590" y="339" text-anchor="middle" font-size="22">E</text></g>
+      <g stroke="#81a674" stroke-opacity=".35" stroke-width="1"><rect class="snake-body" x="209" y="365" width="24" height="24" rx="9"/><rect class="snake-body" x="209" y="339" width="24" height="24" rx="9"/><rect class="snake-body" x="209" y="313" width="24" height="24" rx="9"/><rect class="snake-body" x="209" y="287" width="24" height="24" rx="9"/><rect class="snake-body" x="235" y="287" width="24" height="24" rx="9"/><rect class="snake-body" x="261" y="287" width="24" height="24" rx="9"/><rect class="snake-body" x="287" y="287" width="24" height="24" rx="9"/><rect class="snake-head" x="311" y="283" width="31" height="32" rx="12"/></g>
+      <ellipse cx="333" cy="291" rx="3.5" ry="4" fill="#fffefa"/><ellipse cx="333" cy="306" rx="3.5" ry="4" fill="#fffefa"/><circle cx="334" cy="292" r="1.8" fill="#293d32"/><circle cx="334" cy="305" r="1.8" fill="#293d32"/><ellipse cx="326" cy="307" rx="3" ry="1.8" fill="#e7b7aa"/>
+      <path d="M344 298h5" stroke="#b67679" stroke-width="2" stroke-linecap="round"/>
+      <g opacity=".6"><circle cx="85" cy="217" r="2.5" fill="#a7b697"/><circle cx="423" cy="510" r="3" fill="#cdb5cc"/><circle cx="319" cy="116" r="2" fill="#cdb5cc"/></g>
+    </svg>
+    <span class="board-caption">เก็บตัวอักษร แล้วเข้าซุ้มประตูเพื่อเรียงคำ</span>
+    <div class="pause-cover" id="pause-cover" hidden><span style="font-size:38px" aria-hidden="true">☁</span><h2>พักในสวนสักครู่</h2><p>ตัวอย่างภาพเคลื่อนไหวหยุดแล้ว</p><button class="btn primary" id="resume">ดูตัวอย่างต่อ</button></div>
+  </div>
+  <div class="arena-bottom"><span>แนวทางควบคุม <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / ลูกศร</span><span>ภาพจำลอง · ทดลองด้วยปุ่มด้านล่าง</span></div>
+</section>
+<aside class="sidebar" aria-label="ข้อมูลประกอบการเล่น">
+  <section class="card garden-card"><div class="eyebrow">A SMALL ADVENTURE</div><h2>คำเล็ก ๆ ความรู้ใหม่</h2><p>รวบรวมอักษรไว้ในกระเป๋า<br>แล้วพาเจ้างูเข้าประตูสวน</p><div class="progress"><div></div></div><div class="progress-caption"><span>ประตูรอบถัดไป</span><span>ตัวอย่าง 00:10</span></div></section>
+  <section class="card"><div class="card-head"><h2>กระเป๋าตัวอักษร</h2><span class="count" id="inventory-count">5 ตัว</span></div><div class="tiles" id="inventory"><span class="tile">C</span><span class="tile">A</span><span class="tile">T</span><span class="tile">E</span><span class="tile">R</span></div><p class="helper">เรียงเป็นคำได้เมื่อเข้าประตูสวน</p></section>
+  <section class="card recent"><div class="card-head"><h2>คำที่เจอในสวน</h2><span aria-hidden="true">✿</span></div><div class="word-row"><strong>SUN</strong><span>ดวงอาทิตย์</span></div><div class="word-row"><strong>SKY</strong><span>ท้องฟ้า</span></div><div class="word-row"><strong>JOY</strong><span>ความสุข</span></div></section>
+</aside>
+</div>
+<section class="experiment" aria-label="ทดลองแนวทางออกแบบ"><button class="btn primary" id="collect">✦ ลองเก็บตัวอักษร</button><button class="btn" id="challenge">ลองหน้าเรียงคำ →</button><button class="btn" id="sound" aria-pressed="false">เปิดเสียงตัวอย่าง</button><label class="toggle"><input type="checkbox" id="motion"> ลดการเคลื่อนไหว</label></section>
+<p class="status" id="status" role="status">ต้นแบบ Cozy · เลือกธีมและลองกดปุ่มเพื่อดูจังหวะเอฟเฟกต์</p>
+</main>
+<footer><span>LEXISNAKE V2 / COZY CONCEPT · ข้อมูลและคะแนนสมมติ ยังไม่ใช่เกมที่เล่นได้</span><a href="V2_PLAN.md">อ่านแผนพัฒนา V2 ↗</a></footer>
+</div>
+<dialog id="challenge-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+<div class="dialog-head"><span class="tag">✿ ประตูสวน · ตัวอย่าง</span><button class="icon-btn" id="close-dialog" aria-label="ปิดหน้าเรียงคำ">×</button></div>
+<h2 id="dialog-title">ต่ออักษรให้เป็นคำ</h2><p id="dialog-description">ตัวอย่างคำจากกระเป๋า: CAT<br>ในเกมจริงจะเลือกหรือพิมพ์อักษรได้</p>
+<div class="answer"><span class="tile">C</span><span class="tile">A</span><span class="tile">T</span></div>
+<div class="caption-label" style="text-align:center">A1 · ตัวอย่างเวลา 00:30</div>
+<div id="word-result" role="status"></div>
+<div class="dialog-actions"><button class="btn primary" id="submit-word">ลองเอฟเฟกต์คำถูก</button><button class="btn" id="pronounce">ฟังคำว่า cat</button></div>
+</dialog>
+<script>
+const byId = (id) => document.getElementById(id);
+const board = byId('board'), status = byId('status'), dialog = byId('challenge-dialog');
+const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+let audioContext, soundEnabled = false, paused = false, score = 1350, words = 3, collected = 5, submitted = false, lastCollect = -Infinity;
+byId('motion').checked = motionPreference.matches;
+const syncMotion = () => document.body.classList.toggle('reduce-motion', byId('motion').checked || motionPreference.matches);
+syncMotion();
+motionPreference.addEventListener('change', syncMotion);
+byId('motion').addEventListener('change', syncMotion);
+byId('theme').addEventListener('change', (event) => { document.body.dataset.theme = event.target.value; });
+async function chime(kind) {
+  if (!soundEnabled) return;
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) throw new Error('Audio unavailable');
+    audioContext ||= new Audio();
+    if (audioContext.state === 'suspended') await audioContext.resume();
+    if (!soundEnabled || document.hidden) return;
+    const notes = kind === 'success' ? [523.25, 659.25, 783.99] : [659.25, 880];
+    notes.forEach((frequency, index) => {
+      const oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
+      const start = audioContext.currentTime + index * .085;
+      oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(.045, start + .012);
+      gain.gain.exponentialRampToValueAtTime(.0001, start + .24);
+      oscillator.connect(gain); gain.connect(audioContext.destination);
+      oscillator.start(start); oscillator.stop(start + .26);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    });
+  } catch {
+    soundEnabled = false; updateSoundButton();
+    status.textContent = 'เบราว์เซอร์นี้ยังเล่นเสียงตัวอย่างไม่ได้ แต่ทดลองภาพต่อได้';
+  }
+}
+function updateSoundButton() {
+  byId('sound').textContent = soundEnabled ? 'เสียงตัวอย่าง: เปิด' : 'เปิดเสียงตัวอย่าง';
+  byId('sound').setAttribute('aria-pressed', String(soundEnabled));
+}
+byId('sound').addEventListener('click', () => {
+  soundEnabled = !soundEnabled; updateSoundButton();
+  if (soundEnabled) { status.textContent = 'เปิดเสียงสังเคราะห์ตัวอย่างแล้ว · ลองเก็บตัวอักษรหรือส่งคำ'; void chime('collect'); }
+  else { window.speechSynthesis?.cancel(); void audioContext?.suspend(); status.textContent = 'ปิดเสียงตัวอย่างแล้ว'; }
+});
+function setPaused(value) {
+  paused = value;
+  byId('pause-cover').hidden = !value;
+  byId('pause').setAttribute('aria-pressed', String(value));
+  byId('pause').setAttribute('aria-label', value ? 'ดูภาพตัวอย่างต่อ' : 'พักภาพตัวอย่าง');
+  byId('pause').textContent = value ? '▷' : 'Ⅱ';
+  byId('collect').disabled = value; byId('challenge').disabled = value;
+  board.querySelectorAll('.letter-float, .portal-halo').forEach((item) => { item.style.animationPlayState = value ? 'paused' : 'running'; });
+  if (value) { window.speechSynthesis?.cancel(); void audioContext?.suspend(); }
+}
+byId('pause').addEventListener('click', () => setPaused(!paused));
+byId('resume').addEventListener('click', () => { setPaused(false); byId('pause').focus(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) setPaused(true); });
+byId('collect').addEventListener('click', () => {
+  if (paused || performance.now() - lastCollect < 250) return;
+  lastCollect = performance.now();
+  const tile = document.createElement('span');
+  tile.className = 'tile new'; tile.textContent = 'CATERS'[collected % 6];
+  const inventory = byId('inventory');
+  if (inventory.children.length >= 10) inventory.firstElementChild.remove();
+  inventory.append(tile); collected += 1;
+  byId('inventory-count').textContent = inventory.children.length + ' ตัว';
+  status.textContent = 'เก็บ ' + tile.textContent + ' แล้ว · ตัวอย่างเอฟเฟกต์เมื่ออักษรเข้ากระเป๋า';
+  if (!document.body.classList.contains('reduce-motion')) {
+    const label = document.createElement('span'); label.className = 'floating-letter'; label.textContent = '+ ' + tile.textContent; board.append(label); setTimeout(() => label.remove(), 1000);
+    for (let i = 0; i < 9; i += 1) {
+      const spark = document.createElement('i'); spark.className = 'spark';
+      const angle = i / 9 * Math.PI * 2;
+      spark.style.setProperty('--dx', Math.cos(angle) * 63 + 'px');
+      spark.style.setProperty('--dy', Math.sin(angle) * 52 + 'px');
+      spark.style.background = i % 2 ? 'var(--lavender)' : 'var(--peach)';
+      board.append(spark); setTimeout(() => spark.remove(), 850);
+    }
+  }
+  void chime('collect');
+});
+byId('challenge').addEventListener('click', () => {
+  if (paused) return;
+  submitted = false; byId('submit-word').disabled = false; byId('word-result').textContent = '';
+  board.querySelectorAll('.letter-float, .portal-halo').forEach((item) => { item.style.animationPlayState = 'paused'; });
+  dialog.showModal();
+});
+byId('close-dialog').addEventListener('click', () => dialog.close());
+dialog.addEventListener('close', () => { window.speechSynthesis?.cancel(); setPaused(paused); });
+byId('submit-word').addEventListener('click', () => {
+  if (submitted) return;
+  submitted = true; score += 450; words += 1;
+  byId('score').textContent = score.toLocaleString('en-US'); byId('word-count').textContent = words + ' คำ';
+  byId('word-result').textContent = '✿ CAT = แมว · +450 คะแนน'; byId('submit-word').disabled = true;
+  status.textContent = 'ตัวอย่างคำถูก: แสดงความหมาย คะแนน และปุ่มฟังเสียง';
+  void chime('success');
+});
+byId('pronounce').addEventListener('click', () => {
+  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) { byId('word-result').textContent = 'เครื่องนี้ไม่มีระบบอ่านเสียง · CAT = แมว'; return; }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance('cat'); utterance.lang = 'en-US'; utterance.rate = .8; utterance.volume = .7;
+  const voice = window.speechSynthesis.getVoices().find((item) => item.lang.startsWith('en'));
+  if (voice) utterance.voice = voice;
+  utterance.onerror = (event) => { if (!['canceled', 'interrupted'].includes(event.error)) byId('word-result').textContent = 'ยังอ่านเสียงไม่ได้ · CAT = แมว'; };
+  window.speechSynthesis.speak(utterance);
+});
+</script>
+</body>
+</html>

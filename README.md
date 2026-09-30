@@ -4,6 +4,16 @@
 
 บังคับงูเก็บตัวอักษร เข้าประตูเขียว แล้วเรียงเป็นคำภาษาอังกฤษเพื่อรับคะแนน มีคำศัพท์ระดับ CEFR A1–C2 พร้อมคำแปลไทย เล่นแบบออฟไลน์ได้หลังติดตั้งหรือดาวน์โหลดไฟล์เกม
 
+## V2 — เล่นบนเว็บ
+
+เวอร์ชันเว็บอยู่ใน [Web/](Web/README.md): React + TypeScript + Phaser พร้อมแมพ 4 แบบ ตัวเลือกสีงู หัวใจฟื้นคืนชีพ และกล่องตัวอักษร
+
+เปิดในเครื่องด้วย `cd Web && npm ci && npm run dev`
+
+[GitHub Actions](https://github.com/BeelzebubCode/snake-game/actions/workflows/web-ci.yml) ตรวจเกมอัตโนมัติ และ Vercel เผยแพร่จาก main ดู [การตั้งค่า CI/CD](Web/DEPLOYMENT.md)
+
+รายละเอียดด้านล่างเป็นรุ่น Python V1 สำหรับดาวน์โหลด
+
 ## ดาวน์โหลดแล้วเล่น (ไม่ต้องติดตั้ง Python)
 
 ### [V 1.0.1 — Download](https://github.com/BeelzebubCode/snake-game/releases/tag/v1.0.1)
