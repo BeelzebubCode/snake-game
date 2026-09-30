@@ -223,7 +223,11 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
               g.fillCircle(x - 8, y + 12, 2);
               this.labels[5]
                 .setPosition(x, y + 43)
-                .setText(Math.max(0, Math.ceil((s.portal.expiresAt - s.elapsed) / 1000)) + 's')
+                .setText(
+                  s.tutorial
+                    ? 'ฝึก'
+                    : Math.max(0, Math.ceil((s.portal.expiresAt - s.elapsed) / 1000)) + 's',
+                )
                 .setColor('#b9ffde')
                 .setFontSize(12)
                 .setVisible(true);
@@ -231,7 +235,7 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
             s.letters.forEach((letter, index) => {
               const x = (letter.x + 0.5) * CELL,
                 y = (letter.y + 0.5) * CELL,
-                ratio = Math.max(0, (letter.expiresAt - s.elapsed) / 30_000);
+                ratio = s.tutorial ? 1 : Math.max(0, (letter.expiresAt - s.elapsed) / 30_000);
               g.fillStyle(0xf1c40f, 0.1);
               g.fillCircle(x, y, 20);
               g.fillStyle(0xf1c40f);

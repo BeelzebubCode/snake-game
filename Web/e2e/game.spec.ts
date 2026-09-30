@@ -24,29 +24,91 @@ test('Home, settings, returning-player flow, and wide board', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'พักในสวนสักครู่' })).toBeVisible();
   expect(errors).toEqual([]);
 });
-test('a beginner can complete the actual interactive tutorial', async ({ page }) => {
+test('a beginner learns steering, Shift, letters, chests and the portal with illustrated popups', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
+  await page.clock.install();
   await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
   await page.getByRole('button', { name: /มือใหม่ ขอฝึกก่อน/ }).click();
   await expect(page.locator('canvas')).toBeVisible();
-  await page.clock.install();
+  await expect(page.getByRole('heading', { name: 'ลองบังคับเจ้างู', exact: true })).toBeVisible();
+  await expect(page.locator('.tutorial-modal').getByRole('img')).toHaveCount(1);
+  await page.clock.runFor(2000);
+  await expect(page.getByRole('heading', { name: 'ลองบังคับเจ้างู', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'เริ่มฝึกเลี้ยว' }).click();
+  await page.clock.runFor(3100);
+  await page.keyboard.press('ArrowUp');
+  await page.clock.runFor(300);
+  await expect(page.getByRole('heading', { name: 'กด Shift เพื่อเร่งความเร็ว' })).toBeVisible();
+  await page.getByRole('button', { name: 'ลองเร่งความเร็ว' }).click();
+  await page.clock.runFor(3100);
+  await page.keyboard.down('Shift');
+  await page.clock.runFor(650);
+  await page.keyboard.up('Shift');
+  await expect(page.getByRole('heading', { name: 'เก็บอักษรใส่กระเป๋า' })).toBeVisible();
   await page.getByRole('button', { name: 'เริ่มเก็บตัวอักษร' }).click();
-  await page.clock.runFor(4100);
-  await expect(page.getByRole('heading', { name: 'ประตูสู่โลกคำศัพท์' })).toBeVisible();
+  await page.clock.runFor(3700);
+  await expect(page.getByRole('heading', { name: 'กล่องสุ่มตัวอักษร' })).toBeVisible();
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveText(['C']);
+  await expect(
+    page.getByRole('img', { name: 'กล่องเงิน 2 ทอง 3 ม่วง 4 แดง 5 ตัวอักษร' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'ลองเปิดกล่อง' }).click();
+  await page.clock.runFor(5400);
+  await expect(page.getByRole('heading', { name: 'ของขวัญของคุณมาแล้ว!' })).toBeVisible();
+  await expect(page.locator('.reward-letters .letter-tile')).toHaveText(['A', 'T']);
+  await page.getByRole('button', { name: 'เก็บใส่กระเป๋า +2' }).click();
+  await expect(page.getByRole('heading', { name: 'เข้าประตูสีเขียว' })).toBeVisible();
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveText(['C', 'A', 'T']);
   await page.getByRole('button', { name: 'ลองเข้าประตูกัน' }).click();
-  await page.clock.runFor(4500);
-  await expect(page.getByRole('heading', { name: 'ประตูมิติต่างโลก' })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'เป้าหมายบทสอน' })).toContainText(
+    'เดินไปทางขวาเข้าประตูสีเขียว',
+  );
+  await page.clock.runFor(3900);
+  await expect(page.getByRole('heading', { name: 'เรียง CAT ให้เป็นคำ' })).toBeVisible();
+  await page.getByRole('button', { name: 'ลองเรียงคำ' }).click();
+  await page.getByLabel('คำศัพท์ภาษาอังกฤษ', { exact: true }).fill('CA');
+  await page.getByRole('button', { name: 'ดูคำอธิบาย', exact: true }).click();
+  await page.clock.runFor(1000);
+  await page.getByRole('button', { name: 'ลองเรียงคำ' }).click();
+  await expect(page.getByLabel('คำศัพท์ภาษาอังกฤษ', { exact: true })).toHaveValue('CA');
   await page.getByLabel('คำศัพท์ภาษาอังกฤษ', { exact: true }).fill('CAT');
-  await page.getByRole('button', { name: 'ส่งคำศัพท์' }).click();
+  await page.keyboard.press('Enter');
   await expect(page.getByText('แมว', { exact: true })).toBeVisible();
   await expect(page.getByTestId('score')).toHaveText('450');
+  await page.getByRole('button', { name: 'อ่านกติกาก่อนเล่นจริง' }).click();
+  await expect(page.getByRole('heading', { name: 'พักเกมและใช้หัวใจ' })).toBeVisible();
   await page.getByRole('button', { name: 'จบบทเรียน' }).click();
   await expect(page.getByRole('heading', { name: 'พร้อมออกผจญภัยแล้ว!' })).toBeVisible();
   await page.getByRole('button', { name: 'กลับ Home แล้วเริ่มเล่นกัน' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   expect(errors).toEqual([]);
+});
+test('mobile tutorial can turn and hold the on-screen boost button', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.clock.install();
+  await page.getByRole('button', { name: 'ลองฝึกก่อน' }).click();
+  await expect(page.getByRole('heading', { name: 'ลองบังคับเจ้างู', exact: true })).toBeVisible();
+  const dialog = page.getByRole('dialog');
+  expect(await dialog.evaluate((d) => d.scrollWidth <= d.clientWidth)).toBe(true);
+  await page.getByRole('button', { name: 'ปิด', exact: true }).click();
+  await page.clock.runFor(3100);
+  await page.getByRole('button', { name: 'เลี้ยวขึ้น', exact: true }).click();
+  await page.clock.runFor(300);
+  await page.getByRole('button', { name: 'ลองเร่งความเร็ว' }).click();
+  await page.clock.runFor(3100);
+  const boost = page.getByRole('button', { name: 'เร่ง ↗', exact: true });
+  const box = await boost.boundingBox();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.clock.runFor(650);
+  await page.mouse.up();
+  await expect(page.getByRole('heading', { name: 'เก็บอักษรใส่กระเป๋า' })).toBeVisible();
 });
 test('mobile Home and play controls fit the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

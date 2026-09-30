@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import type { CSSProperties, FormEvent } from 'react';
 import { ChestArt, GardenArt, SnakeMark } from './components/Art';
 import Modal from './components/Modal';
+import TutorialLesson from './components/TutorialLesson';
+import { LESSONS } from './game/tutorial';
 import SettingsPanel from './components/SettingsPanel';
 import { loadDictionary } from './data/vocabulary';
 import { GameEngine } from './game/engine';
@@ -234,7 +236,8 @@ function GameScreen({
     if (
       s.phase === 'challenge' &&
       previousPhase.current !== 'paused' &&
-      previousPhase.current !== 'challenge'
+      previousPhase.current !== 'challenge' &&
+      !(s.tutorial && previousPhase.current === 'lesson')
     )
       setDraft('');
     if (
@@ -372,7 +375,11 @@ function GameScreen({
         <div className="game-actions">
           <span className="portal-clock">
             <i />{' '}
-            {s.portal ? 'ประตูเปิดแล้ว' : 'ประตูอีก ' + clock(s.nextPortalAt - s.elapsed) + ' วิ'}
+            {s.tutorial
+              ? 'สนามฝึก · ไม่เสียหัวใจ'
+              : s.portal
+                ? 'ประตูเปิดแล้ว'
+                : 'ประตูอีก ' + clock(s.nextPortalAt - s.elapsed) + ' วิ'}
           </span>
           <button
             className="icon-button"
@@ -405,6 +412,17 @@ function GameScreen({
           </button>
         </div>
       </header>
+      {s.tutorial && ['playing', 'countdown'].includes(phase) && (
+        <aside className="tutorial-task" aria-label="เป้าหมายบทสอน">
+          <span className="tutorial-task-step">
+            {s.lesson + 1} / {LESSONS.length}
+          </span>
+          <p>{LESSONS[s.lesson].task}</p>
+          <button className="text-button" onClick={() => engine.showLesson()}>
+            ดูคำอธิบาย
+          </button>
+        </aside>
+      )}
       <main className="game-field" aria-label="สนามเกม" tabIndex={-1}>
         <PhaserBoard engine={engine} />
         {phase === 'countdown' && (
@@ -452,7 +470,7 @@ function GameScreen({
             <kbd>W A S D</kbd> / ลูกศร
           </span>
           <span>
-            <kbd>Space</kbd> เร่ง · <kbd>P</kbd> พัก
+            <kbd>Shift</kbd> / <kbd>Space</kbd> เร่ง · <kbd>P</kbd> พัก
           </span>
         </div>
       </footer>
@@ -511,40 +529,28 @@ function GameScreen({
       </div>
 
       {phase === 'lesson' && (
-        <Modal
-          title={s.lesson === 0 ? 'มาเดินเล่นกันก่อน' : 'ประตูสู่โลกคำศัพท์'}
-          className="lesson-modal"
-        >
-          <div className="modal-illustration">
-            {s.lesson === 0 ? <SnakeMark large /> : <span className="portal-symbol">✧</span>}
-          </div>
-          <div className="step-pills">
-            <span className="active">1</span>
-            <i />
-            <span className={s.lesson >= 1 ? 'active' : ''}>2</span>
-            <i />
-            <span>3</span>
-          </div>
-          <p className="modal-description">
-            {s.lesson === 0
-              ? 'ใช้ลูกศรหรือ WASD บังคับเจ้างูไปเก็บตัวอักษร C ด้านหน้า บนมือถือใช้ปุ่มลูกศรใต้สนามได้เลย'
-              : 'เก่งมาก! ตอนนี้มี C A T ครบแล้ว เดินต่อไปทางขวาเข้าซุ้มประตูสีเขียว แล้วลองเรียงคำว่า CAT'}
-          </p>
-          <div className="soft-note">โหมดฝึกสอนไม่เสียหัวใจ ลองใหม่ได้เสมอ</div>
-          <button className="button primary full" onClick={() => engine.startLesson()}>
-            {s.lesson === 0 ? 'เริ่มเก็บตัวอักษร' : 'ลองเข้าประตูกัน'} →
-          </button>
-          <button className="text-button centered" onClick={onHome}>
-            กลับหน้า Home
-          </button>
-        </Modal>
+        <TutorialLesson
+          step={s.lesson}
+          notice={s.notice}
+          onContinue={() => engine.startLesson()}
+          onHome={onHome}
+        />
       )}
       {phase === 'challenge' && (
         <Modal title="ประตูมิติต่างโลก" wide className="challenge-modal">
           <div className="challenge-heading">
             <div>
               <span className="eyebrow">A WORLD OF WORDS</span>
-              <p className="subtle">เรียงคำจากตัวอักษรในกระเป๋าของคุณ</p>
+              <p className="subtle">
+                {s.tutorial
+                  ? 'บทฝึก: เรียง CAT (แมว) แล้วกด Enter หรือส่งคำศัพท์'
+                  : 'เรียงคำจากตัวอักษรในกระเป๋าของคุณ'}
+              </p>
+              {s.tutorial && (
+                <button className="text-button" onClick={() => engine.showLesson()}>
+                  ดูคำอธิบาย
+                </button>
+              )}
             </div>
             <Timer remaining={s.challengeRemaining} total={s.settings.portalSeconds * 1000} />
           </div>
@@ -660,7 +666,7 @@ function GameScreen({
               engine.continueWord();
             }}
           >
-            {s.tutorial ? 'จบบทเรียน' : 'กลับไปเดินเล่นต่อ'} →
+            {s.tutorial ? 'อ่านกติกาก่อนเล่นจริง' : 'กลับไปเดินเล่นต่อ'} →
           </button>
         </Modal>
       )}
@@ -826,9 +832,9 @@ function GameScreen({
         <Modal title="พร้อมออกผจญภัยแล้ว!" className="result-modal">
           <span className="result-flower">✿</span>
           <p className="modal-description">
-            เก็บอักษร → เข้าประตู → เรียงเป็นคำ
+            เลี้ยวและเร่ง → เก็บอักษร → เปิดกล่อง → เข้าประตู → เรียงคำ
             <br />
-            ระหว่างทางยังมีกล่องสมบัติให้เปิดด้วย
+            คุณลองเล่นครบทุกขั้นแล้ว เริ่มผจญภัยกันได้เลย
           </p>
           <div className="mini-chest-guide">
             {kinds.map((kind) => (

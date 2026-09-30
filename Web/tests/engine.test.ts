@@ -273,29 +273,136 @@ describe('revival', () => {
   });
 });
 describe('beginner tutorial', () => {
-  it('walks through collecting, entering a portal, and spelling CAT', () => {
-    const e = new GameEngine({ ...DEFAULT_SETTINGS }, true, () => 0.3, new Vocabulary());
-    expect(e.state.phase).toBe('lesson');
+  function engine() {
+    return new GameEngine(
+      { ...DEFAULT_SETTINGS, speed: 'expert', portalSeconds: 15 },
+      true,
+      () => 0.3,
+      new Vocabulary(),
+    );
+  }
+  it('requires steering and boosting, then teaches collecting, chests, portals and spelling', () => {
+    const e = engine();
+    expect(e.state.settings.speed).toBe('slow');
+    expect(e.state.settings.portalSeconds).toBe(60);
+    expect(e.state.letters).toEqual([]);
     e.startLesson();
-    advance(e, 3000);
-    advance(e, 600);
-    expect(e.state.phase).toBe('lesson');
+    advance(e, 3400);
+    expect(e.state.lesson).toBe(0); // Straight movement does not complete the steering lesson.
+    e.turn('up');
+    advance(e, 200);
     expect(e.state.lesson).toBe(1);
-    expect(e.state.inventory).toEqual(['C', 'A', 'T']);
+    expect(e.state.phase).toBe('lesson');
     e.startLesson();
-    advance(e, 3000);
-    advance(e, 1000);
+    advance(e, 3400);
+    expect(e.state.lesson).toBe(1); // Normal speed does not complete the boost lesson.
+    e.setBoost(true);
+    advance(e, 600);
+    expect(e.state.lesson).toBe(2);
+    expect(e.state.phase).toBe('lesson');
+    e.startLesson();
+    expect(e.state.letters.map((l) => l.letter)).toEqual(['C']);
+    advance(e, 3600);
+    expect(e.state.inventory).toEqual(['C']);
+    expect(e.state.lesson).toBe(3);
+    e.startLesson();
+    expect(e.state.letters).toEqual([]);
+    advance(e, 3600);
+    expect(e.state.phase).toBe('chest');
+    expect(e.state.reward!.letters).toEqual(['A', 'T']);
+    expect(e.claimChest()).toBe(false);
+    advance(e, 1600);
+    expect(e.claimChest()).toBe(true);
+    expect(e.claimChest()).toBe(false);
+    expect(e.state.inventory).toEqual(['C', 'A', 'T']);
+    expect(e.state.lesson).toBe(4);
+    e.startLesson();
+    expect(e.state.portal).not.toBeNull();
+    expect(e.state.letters).toEqual([]);
+    advance(e, 3800);
+    expect(e.state.phase).toBe('lesson');
+    expect(e.state.lesson).toBe(5);
+    const time = e.state.challengeRemaining;
+    advance(e, 120000);
+    expect(e.state.challengeRemaining).toBe(time);
+    expect(e.state.letters).toEqual([]);
+    e.startLesson();
     expect(e.state.phase).toBe('challenge');
+    expect(e.hint()).toBe('CAT');
+    expect(e.submitWord('ACT')).toBe(false);
+    expect(e.state.inventory).toHaveLength(3);
     expect(e.submitWord('CAT')).toBe(true);
+    expect(e.state.score).toBe(450);
     e.continueWord();
+    expect(e.state.lesson).toBe(6);
+    expect(e.state.phase).toBe('lesson');
+    e.startLesson();
     expect(e.state.phase).toBe('tutorialDone');
     expect(e.state.hearts).toBe(3);
   });
-  it('restarts the full challenge time after a tutorial timeout', () => {
-    const e = new GameEngine({ ...DEFAULT_SETTINGS }, true);
-    e.state.phase = 'challenge';
-    advance(e, 60000);
+  it('never fills three random letters or spawns random objects during any practice stage', () => {
+    for (const lesson of [0, 1, 2, 3, 4]) {
+      const e = engine();
+      e.state.lesson = lesson;
+      e.startLesson();
+      advance(e, 3000);
+      e.state.elapsed = 90000;
+      e.state.snake = [
+        { x: 20, y: 11 },
+        { x: 19, y: 11 },
+        { x: 18, y: 11 },
+      ];
+      advance(e, 200);
+      expect(e.state.letters.map((l) => l.letter)).toEqual(lesson === 2 ? ['C'] : []);
+      expect(e.state.chest?.kind ?? null).toBe(lesson === 3 ? 'silver' : null);
+      expect(Boolean(e.state.portal)).toBe(lesson === 4);
+    }
+  });
+  it('retries the same objective after collisions, keeping inventory and hearts', () => {
+    const e = engine();
+    e.state.lesson = 4;
+    e.state.inventory = ['C', 'A', 'T'];
+    e.startLesson();
+    advance(e, 3000);
+    e.state.snake = [
+      { x: 39, y: 10 },
+      { x: 38, y: 10 },
+      { x: 37, y: 10 },
+    ];
+    advance(e, 200);
+    expect(e.state.phase).toBe('lesson');
+    expect(e.state.lesson).toBe(4);
+    expect(e.state.hearts).toBe(3);
+    expect(e.state.inventory).toEqual(['C', 'A', 'T']);
+    e.startLesson();
+    expect(e.state.letters).toEqual([]);
+    expect(e.state.chest).toBeNull();
+    advance(e, 3800);
+    expect(e.state.lesson).toBe(5);
+  });
+  it('pauses instructions and resumes help without resetting challenge time or objects', () => {
+    const e = engine();
+    e.state.lesson = 2;
+    e.startLesson();
+    advance(e, 3200);
+    const letter = structuredClone(e.state.letters);
+    e.showLesson();
+    advance(e, 90000);
+    e.pause();
+    e.resume();
+    e.startLesson();
+    expect(e.state.letters).toEqual(letter);
+    expect(e.state.lesson).toBe(2);
+    e.state.lesson = 5;
+    e.state.phase = 'lesson';
+    e.startLesson();
+    advance(e, 10000);
+    e.showLesson();
+    advance(e, 90000);
+    e.startLesson();
     expect(e.state.phase).toBe('challenge');
+    expect(e.state.challengeRemaining).toBe(50000);
+    advance(e, 50000);
     expect(e.state.challengeRemaining).toBe(60000);
     expect(e.state.hearts).toBe(3);
   });

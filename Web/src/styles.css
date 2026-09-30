@@ -2689,3 +2689,148 @@ kbd {
     padding: 10px 13px;
   }
 }
+
+.tutorial-modal {
+  text-align: left;
+}
+.lesson-progress {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 6px 0 20px;
+}
+.lesson-progress > span {
+  color: #7fddbd;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.lesson-progress > div {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+.lesson-progress i {
+  height: 4px;
+  background: #2b3b50;
+  border-radius: 4px;
+  flex: 1;
+}
+.lesson-progress i.complete {
+  background: #2ee6a0;
+}
+.lesson-picture {
+  display: block;
+  width: 100%;
+  border: 1px solid #2e4357;
+  border-radius: 16px;
+  margin: 0 0 21px;
+}
+.lesson-summary {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #e5f9f0;
+  margin: 0 0 12px;
+}
+.lesson-details {
+  padding-left: 20px;
+  margin: 0 0 20px;
+  color: #b5c7d9;
+  font-size: 13px;
+  line-height: 1.85;
+}
+.lesson-details li + li {
+  margin-top: 10px;
+}
+.lesson-paused {
+  color: #899fb7;
+  text-align: center;
+  font-size: 10px;
+  margin: 17px 0 12px;
+}
+.lesson-chests {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 24px 14px;
+  margin: 0 0 21px;
+  border: 1px solid #2e4357;
+  border-radius: 16px;
+  background: #101b29;
+}
+.lesson-chests > div {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.lesson-chests svg {
+  width: 80px;
+  max-width: 100%;
+}
+.lesson-chests strong {
+  font-size: 12px;
+  color: #dcebf9;
+}
+.lesson-chests span {
+  font-size: 11px;
+  color: #84e4c4;
+}
+.tutorial-task {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 0 22px 10px;
+  padding: 10px 14px;
+  background: #152c29;
+  border: 1px solid #2b5448;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.tutorial-task-step {
+  color: #6df1be;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tutorial-task p {
+  font-size: 12px;
+  color: #dbefe5;
+  flex: 1;
+  line-height: 1.6;
+}
+.tutorial-task button {
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 6px;
+}
+@media (max-width: 620px) {
+  .tutorial-task {
+    gap: 8px;
+    margin: 0 9px 7px;
+    padding: 8px;
+  }
+  .tutorial-task-step,
+  .tutorial-task button {
+    font-size: 9px;
+  }
+  .tutorial-task p {
+    font-size: 10px;
+  }
+  .lesson-summary {
+    font-size: 15px;
+  }
+  .lesson-details {
+    font-size: 12px;
+  }
+  .lesson-chests {
+    gap: 8px;
+    padding: 18px 8px;
+  }
+  .lesson-chests strong {
+    font-size: 10px;
+  }
+  .lesson-chests span {
+    font-size: 10px;
+  }
+}

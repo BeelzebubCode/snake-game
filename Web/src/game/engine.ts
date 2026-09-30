@@ -37,8 +37,10 @@ export class GameEngine {
   private moveAccumulator = 0;
   private hudAccumulator = 0;
   private resumePhase: Phase = 'playing';
+  private lessonReturn: Phase | null = null;
   private id = 0;
   private boosted = false;
+  private tutorialBoostMoves = 0;
   constructor(
     settings: Settings = DEFAULT_SETTINGS,
     tutorial = false,
@@ -48,7 +50,11 @@ export class GameEngine {
     const snake = this.startSnake();
     this.state = {
       phase: tutorial ? 'lesson' : 'countdown',
-      settings: { ...DEFAULT_SETTINGS, ...settings },
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...settings,
+        ...(tutorial ? { speed: 'slow', portalSeconds: 60 } : {}),
+      },
       snake,
       previousSnake: snake.map((p) => ({ ...p })),
       direction: 'right',
@@ -77,15 +83,7 @@ export class GameEngine {
       deathReason: '',
       sessionId: Math.random().toString(36).slice(2) + Date.now().toString(36),
     };
-    if (tutorial) {
-      this.state.letters = ['C', 'A', 'T'].map((letter, i) => ({
-        id: ++this.id,
-        letter,
-        x: 11 + i * 2,
-        y: 11,
-        expiresAt: LETTER_LIFETIME,
-      }));
-    } else this.fillLetters();
+    if (!tutorial) this.fillLetters();
     this.snapshot = structuredClone(this.state);
   }
   private startSnake(): Cell[] {
@@ -158,11 +156,11 @@ export class GameEngine {
       }
     } else if (s.phase === 'playing') {
       s.elapsed += dt;
-      s.letters = s.letters.filter((letter) => letter.expiresAt > s.elapsed);
-      this.fillLetters();
-      if (s.chest && s.chest.expiresAt <= s.elapsed) s.chest = null;
-      if (s.portal && s.portal.expiresAt <= s.elapsed) s.portal = null;
       if (!s.tutorial) {
+        s.letters = s.letters.filter((letter) => letter.expiresAt > s.elapsed);
+        this.fillLetters();
+        if (s.chest && s.chest.expiresAt <= s.elapsed) s.chest = null;
+        if (s.portal && s.portal.expiresAt <= s.elapsed) s.portal = null;
         if (!s.chest && s.elapsed >= s.nextChestAt) this.spawnChest();
         if (!s.portal && s.elapsed >= s.nextPortalAt) this.spawnPortal();
       }
@@ -224,6 +222,7 @@ export class GameEngine {
     return pool[Math.min(pool.length - 1, Math.floor(this.random() * pool.length))];
   }
   private fillLetters() {
+    if (this.state.tutorial) return;
     while (this.state.letters.length < LETTER_COUNT) {
       const cell = this.freeCell();
       if (!cell) return;
@@ -306,20 +305,26 @@ export class GameEngine {
       s.letters = s.letters.filter((item) => item.id !== pickup.id);
       this.fillLetters();
       this.sound('collect');
-      if (s.tutorial && s.lesson === 0) {
-        s.inventory = ['C', 'A', 'T'];
-        s.lesson = 1;
-        s.phase = 'lesson';
-        this.queued = [];
-        this.publish();
+      if (s.tutorial && s.lesson === 2) {
+        this.nextLesson();
         return;
       }
+    }
+    if (s.tutorial && s.lesson === 1 && this.boosted) this.tutorialBoostMoves += 1;
+    if (
+      s.tutorial &&
+      ((s.lesson === 0 && s.direction === 'up') || (s.lesson === 1 && this.tutorialBoostMoves >= 5))
+    ) {
+      this.nextLesson();
+      return;
     }
     if (s.chest && same(s.chest, head)) {
       const kind = s.chest.kind;
       s.reward = {
         kind,
-        letters: Array.from({ length: CHESTS[kind].count }, () => this.randomLetter()),
+        letters: s.tutorial
+          ? ['A', 'T']
+          : Array.from({ length: CHESTS[kind].count }, () => this.randomLetter()),
         elapsed: 0,
         revealed: s.settings.reducedMotion,
       };
@@ -346,21 +351,72 @@ export class GameEngine {
       this.queued = [];
       this.boosted = false;
       this.sound('portal');
+      if (s.tutorial) {
+        this.nextLesson();
+        return;
+      }
       this.publish();
     }
   }
+  private nextLesson() {
+    const s = this.state;
+    s.lesson += 1;
+    s.phase = 'lesson';
+    s.notice = '';
+    s.letters = [];
+    s.chest = null;
+    s.portal = null;
+    s.previousSnake = s.snake.map((p) => ({ ...p }));
+    this.queued = [];
+    this.boosted = false;
+    this.lessonReturn = null;
+    this.publish();
+  }
+  private prepareLessonField() {
+    const s = this.state;
+    this.tutorialBoostMoves = 0;
+    s.snake = this.startSnake();
+    s.previousSnake = s.snake.map((p) => ({ ...p }));
+    s.direction = 'right';
+    s.nextDirection = 'right';
+    s.letters = [];
+    s.chest = null;
+    s.portal = null;
+    // Practice objects are scripted and stay until collected, even after a retry.
+    if (s.lesson === 2)
+      s.letters = [
+        { id: ++this.id, letter: 'C', x: 11, y: 11, expiresAt: Number.MAX_SAFE_INTEGER },
+      ];
+    if (s.lesson === 3)
+      s.chest = { id: ++this.id, kind: 'silver', x: 11, y: 11, expiresAt: Number.MAX_SAFE_INTEGER };
+    if (s.lesson === 4) s.portal = { x: 12, y: 10, expiresAt: Number.MAX_SAFE_INTEGER };
+  }
+  showLesson() {
+    const s = this.state;
+    if (!s.tutorial || !['playing', 'countdown', 'challenge'].includes(s.phase)) return;
+    this.lessonReturn = s.phase;
+    s.phase = 'lesson';
+    this.queued = [];
+    this.boosted = false;
+    this.publish();
+  }
   startLesson() {
     const s = this.state;
-    if (s.phase !== 'lesson') return;
-    if (s.lesson === 1) {
-      s.snake = this.startSnake();
-      s.previousSnake = s.snake.map((p) => ({ ...p }));
-      s.direction = 'right';
-      s.portal = { x: 13, y: 11, expiresAt: s.elapsed + 3600_000 };
-      s.letters = s.letters.filter((p) => !(p.x >= 13 && p.x <= 14 && p.y >= 11 && p.y <= 12));
-      this.fillLetters();
+    if (!s.tutorial || s.phase !== 'lesson') return;
+    if (this.lessonReturn) {
+      const target = this.lessonReturn;
+      this.lessonReturn = null;
+      if (target === 'challenge') s.phase = target;
+      else this.beginCountdown();
+    } else if (s.lesson === 6) s.phase = 'tutorialDone';
+    else if (s.lesson === 5) {
+      s.phase = 'challenge';
+      s.challengeRemaining = s.settings.portalSeconds * 1000;
+      s.error = '';
+    } else {
+      this.prepareLessonField();
+      this.beginCountdown();
     }
-    this.beginCountdown();
     this.publish();
   }
   submitWord(input: string): boolean {
@@ -371,6 +427,7 @@ export class GameEngine {
     let error = '';
     if (!/^[A-Z]+$/.test(word)) error = 'ใส่คำภาษาอังกฤษก่อนนะ';
     else if (!canBuild(word, s.inventory)) error = 'ตัวอักษรในกระเป๋าไม่พอสำหรับคำนี้';
+    else if (s.tutorial && word !== 'CAT') error = 'บทนี้ลองเรียง CAT (แมว) จาก C A T ก่อนนะ';
     else if (!entry) error = 'ยังไม่พบคำนี้ในคลัง ลองคำอื่นได้เลย';
     else if (!s.tutorial && !matchesLevel(entry.level, s.settings.level))
       error = 'คำนี้ไม่อยู่ในชุดระดับที่เลือก';
@@ -395,6 +452,7 @@ export class GameEngine {
   hint(): string {
     const s = this.state;
     if (s.phase !== 'challenge') return '';
+    if (s.tutorial) return 'CAT';
     const entry = this.dictionary.hint(s.inventory, s.tutorial ? 'all' : s.settings.level);
     if (!entry) {
       s.error = 'ยังเรียงคำในชุดนี้ไม่ได้ เก็บอักษรเพิ่มในรอบถัดไป';
@@ -410,8 +468,10 @@ export class GameEngine {
   }
   continueWord() {
     if (this.state.phase !== 'wordResult') return;
-    if (this.state.tutorial) this.state.phase = 'tutorialDone';
-    else this.beginCountdown();
+    if (this.state.tutorial) {
+      this.nextLesson();
+      return;
+    } else this.beginCountdown();
     this.publish();
   }
   claimChest() {
@@ -420,6 +480,10 @@ export class GameEngine {
     s.inventory.push(...s.reward.letters);
     s.notice = CHESTS[s.reward.kind].title + ' เพิ่ม ' + s.reward.letters.length + ' ตัวอักษร';
     s.reward = null;
+    if (s.tutorial) {
+      this.nextLesson();
+      return true;
+    }
     this.beginCountdown();
     this.publish();
     return true;
@@ -430,13 +494,10 @@ export class GameEngine {
     this.boosted = false;
     this.sound('death');
     if (s.tutorial) {
-      s.snake = this.startSnake();
-      s.previousSnake = s.snake.map((p) => ({ ...p }));
-      s.direction = 'right';
-      s.notice = 'ลองใหม่ได้เลย โหมดฝึกไม่เสียหัวใจ';
-      s.letters = s.letters.filter((p) => !s.snake.some((q) => same(p, q)));
-      this.fillLetters();
-      this.beginCountdown();
+      this.prepareLessonField();
+      s.notice = 'ลองบทเดิมอีกครั้งได้เลย ชนขอบหรือตัวเองในโหมดฝึกไม่เสียหัวใจ';
+      this.lessonReturn = null;
+      s.phase = 'lesson';
       this.publish();
       return;
     }
