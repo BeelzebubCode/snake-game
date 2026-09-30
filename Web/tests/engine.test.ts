@@ -290,31 +290,64 @@ describe('beginner tutorial', () => {
     advance(e, 3400);
     expect(e.state.lesson).toBe(0); // Straight movement does not complete the steering lesson.
     e.turn('up');
-    advance(e, 200);
+    advance(e, 400);
+    expect(e.state.lesson).toBe(0);
+    expect(e.state.practicedDirections).toEqual([]);
+    advance(e, 800);
+    for (const direction of ['left', 'down', 'right'] as const) {
+      e.turn(direction);
+      advance(e, 1200);
+    }
+    expect(e.state.practicedDirections).toEqual(['up', 'left', 'down', 'right']);
+    expect(e.state.phase).toBe('lessonReview');
+    const snake = structuredClone(e.state.snake);
+    advance(e, 90000);
+    expect(e.state.snake).toEqual(snake);
+    expect(e.state.lesson).toBe(0);
+    e.continueLesson();
     expect(e.state.lesson).toBe(1);
-    expect(e.state.phase).toBe('lesson');
+    e.continueLesson(); // Repeated clicks cannot skip another lesson.
+    expect(e.state.lesson).toBe(1);
     e.startLesson();
     advance(e, 3400);
     expect(e.state.lesson).toBe(1); // Normal speed does not complete the boost lesson.
     e.setBoost(true);
     advance(e, 600);
-    expect(e.state.lesson).toBe(2);
-    expect(e.state.phase).toBe('lesson');
+    expect(e.state.lesson).toBe(1);
+    expect(e.state.phase).toBe('lessonReview');
+    e.continueLesson();
     e.startLesson();
     expect(e.state.letters.map((l) => l.letter)).toEqual(['C']);
     advance(e, 3600);
+    expect(e.state.inventory).toEqual([]); // Time to see and approach the letter.
+    advance(e, 1400);
     expect(e.state.inventory).toEqual(['C']);
-    expect(e.state.lesson).toBe(3);
+    expect(e.state.phase).toBe('lessonReview');
+    advance(e, 90000);
+    expect(e.state.lesson).toBe(2);
+    expect(e.state.inventory).toEqual(['C']);
+    e.continueLesson();
     e.startLesson();
     expect(e.state.letters).toEqual([]);
-    advance(e, 3600);
+    advance(e, 5000);
     expect(e.state.phase).toBe('chest');
     expect(e.state.reward!.letters).toEqual(['A', 'T']);
     expect(e.claimChest()).toBe(false);
+    advance(e, 90000);
+    expect(e.state.reward!.elapsed).toBe(0);
+    expect(e.state.reward!.revealed).toBe(false);
+    e.openTutorialChest();
     advance(e, 1600);
+    advance(e, 90000);
+    expect(e.state.phase).toBe('chest');
+    expect(e.state.inventory).toEqual(['C']);
     expect(e.claimChest()).toBe(true);
     expect(e.claimChest()).toBe(false);
     expect(e.state.inventory).toEqual(['C', 'A', 'T']);
+    expect(e.state.phase).toBe('lessonReview');
+    advance(e, 90000);
+    expect(e.state.lesson).toBe(3);
+    e.continueLesson();
     expect(e.state.lesson).toBe(4);
     e.startLesson();
     expect(e.state.portal).not.toBeNull();
@@ -339,6 +372,24 @@ describe('beginner tutorial', () => {
     e.startLesson();
     expect(e.state.phase).toBe('tutorialDone');
     expect(e.state.hearts).toBe(3);
+  });
+  it('keeps manual chest opening and review even with reduced motion', () => {
+    const e = new GameEngine({ ...DEFAULT_SETTINGS, reducedMotion: true }, true);
+    e.state.lesson = 3;
+    e.state.inventory = ['C'];
+    e.startLesson();
+    advance(e, 5000);
+    expect(e.state.reward?.opened).toBe(false);
+    expect(e.claimChest()).toBe(false);
+    e.openTutorialChest();
+    expect(e.state.reward?.revealed).toBe(true);
+    expect(e.claimChest()).toBe(true);
+    e.pause();
+    advance(e, 90000);
+    e.resume();
+    expect(e.state.phase).toBe('lessonReview');
+    expect(e.state.lesson).toBe(3);
+    expect(e.state.inventory).toEqual(['C', 'A', 'T']);
   });
   it('never fills three random letters or spawns random objects during any practice stage', () => {
     for (const lesson of [0, 1, 2, 3, 4]) {

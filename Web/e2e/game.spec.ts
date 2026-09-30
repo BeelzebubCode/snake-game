@@ -41,29 +41,54 @@ test('a beginner learns steering, Shift, letters, chests and the portal with ill
   await expect(page.getByRole('heading', { name: 'ลองบังคับเจ้างู', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'เริ่มฝึกเลี้ยว' }).click();
   await page.clock.runFor(3100);
-  await page.keyboard.press('ArrowUp');
-  await page.clock.runFor(300);
+  await page.keyboard.press('w');
+  await page.clock.runFor(400);
+  await expect(page.getByRole('complementary', { name: 'เป้าหมายบทสอน' })).toBeVisible();
+  await page.clock.runFor(900);
+  for (const key of ['a', 's', 'd']) {
+    await page.keyboard.press(key);
+    await page.clock.runFor(1300);
+  }
+  await expect(page.getByRole('heading', { name: 'ลองครบทั้ง 4 ทิศแล้ว' })).toBeVisible();
+  await page.clock.runFor(2000);
+  await expect(page.getByRole('heading', { name: 'ลองครบทั้ง 4 ทิศแล้ว' })).toBeVisible();
+  await page.getByRole('button', { name: 'พร้อมแล้ว ไปฝึกเร่งความเร็ว' }).click();
   await expect(page.getByRole('heading', { name: 'กด Shift เพื่อเร่งความเร็ว' })).toBeVisible();
   await page.getByRole('button', { name: 'ลองเร่งความเร็ว' }).click();
   await page.clock.runFor(3100);
   await page.keyboard.down('Shift');
   await page.clock.runFor(650);
   await page.keyboard.up('Shift');
+  await page.getByRole('button', { name: 'พร้อมแล้ว ไปฝึกเก็บอักษร' }).click();
   await expect(page.getByRole('heading', { name: 'เก็บอักษรใส่กระเป๋า' })).toBeVisible();
   await page.getByRole('button', { name: 'เริ่มเก็บตัวอักษร' }).click();
-  await page.clock.runFor(3700);
+  await page.clock.runFor(5300);
+  await expect(page.getByRole('heading', { name: '↑ ตัว C อยู่ในกระเป๋าตรงนี้' })).toBeVisible();
+  await expect(page.locator('.tutorial-bag-focus .letter-tile')).toHaveText(['C']);
+  await page.clock.runFor(2000);
+  await expect(page.getByRole('heading', { name: '↑ ตัว C อยู่ในกระเป๋าตรงนี้' })).toBeVisible();
+  await page.getByRole('button', { name: 'เห็น C ในกระเป๋าแล้ว ไปฝึกเปิดกล่อง' }).click();
   await expect(page.getByRole('heading', { name: 'กล่องสุ่มตัวอักษร' })).toBeVisible();
-  await expect(page.locator('.inventory-strip .letter-tile')).toHaveText(['C']);
   await expect(
     page.getByRole('img', { name: 'กล่องเงิน 2 ทอง 3 ม่วง 4 แดง 5 ตัวอักษร' }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'ลองเปิดกล่อง' }).click();
-  await page.clock.runFor(5400);
+  await page.clock.runFor(5300);
+  await expect(page.getByRole('heading', { name: 'ลองเปิดกล่องเงิน' })).toBeVisible();
+  await page.clock.runFor(2000);
+  await expect(page.getByRole('heading', { name: 'ลองเปิดกล่องเงิน' })).toBeVisible();
+  await page.getByRole('button', { name: 'เริ่มเปิดกล่องเงิน' }).click();
+  await page.clock.runFor(1800);
   await expect(page.getByRole('heading', { name: 'ของขวัญของคุณมาแล้ว!' })).toBeVisible();
   await expect(page.locator('.reward-letters .letter-tile')).toHaveText(['A', 'T']);
   await page.getByRole('button', { name: 'เก็บใส่กระเป๋า +2' }).click();
+  await expect(page.getByRole('heading', { name: '↑ A และ T เพิ่มในกระเป๋าแล้ว' })).toBeVisible();
+  await expect(page.locator('.tutorial-bag-focus .letter-tile')).toHaveText(['C', 'A', 'T']);
+  await expect(page.locator('.tutorial-new-letter')).toHaveText(['A', 'T']);
+  await page.clock.runFor(2000);
+  await expect(page.getByRole('heading', { name: '↑ A และ T เพิ่มในกระเป๋าแล้ว' })).toBeVisible();
+  await page.getByRole('button', { name: 'เห็น C A T ครบแล้ว ไปฝึกเข้าประตู' }).click();
   await expect(page.getByRole('heading', { name: 'เข้าประตูสีเขียว' })).toBeVisible();
-  await expect(page.locator('.inventory-strip .letter-tile')).toHaveText(['C', 'A', 'T']);
   await page.getByRole('button', { name: 'ลองเข้าประตูกัน' }).click();
   await expect(page.getByRole('complementary', { name: 'เป้าหมายบทสอน' })).toContainText(
     'เดินไปทางขวาเข้าประตูสีเขียว',
@@ -89,17 +114,22 @@ test('a beginner learns steering, Shift, letters, chests and the portal with ill
   expect(errors).toEqual([]);
 });
 test('mobile tutorial can turn and hold the on-screen boost button', async ({ page }) => {
+  test.setTimeout(120_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.clock.install();
   await page.getByRole('button', { name: 'ลองฝึกก่อน' }).click();
+  await expect(page.locator('canvas')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'ลองบังคับเจ้างู', exact: true })).toBeVisible();
   const dialog = page.getByRole('dialog');
   expect(await dialog.evaluate((d) => d.scrollWidth <= d.clientWidth)).toBe(true);
   await page.getByRole('button', { name: 'ปิด', exact: true }).click();
   await page.clock.runFor(3100);
-  await page.getByRole('button', { name: 'เลี้ยวขึ้น', exact: true }).click();
-  await page.clock.runFor(300);
+  for (const name of ['เลี้ยวขึ้น', 'เลี้ยวซ้าย', 'เลี้ยวลง', 'เลี้ยวขวา']) {
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.clock.runFor(1300);
+  }
+  await page.getByRole('button', { name: 'พร้อมแล้ว ไปฝึกเร่งความเร็ว' }).click();
   await page.getByRole('button', { name: 'ลองเร่งความเร็ว' }).click();
   await page.clock.runFor(3100);
   const boost = page.getByRole('button', { name: 'เร่ง ↗', exact: true });
@@ -108,7 +138,17 @@ test('mobile tutorial can turn and hold the on-screen boost button', async ({ pa
   await page.mouse.down();
   await page.clock.runFor(650);
   await page.mouse.up();
+  await page.getByRole('button', { name: 'พร้อมแล้ว ไปฝึกเก็บอักษร' }).click();
   await expect(page.getByRole('heading', { name: 'เก็บอักษรใส่กระเป๋า' })).toBeVisible();
+  await page.getByRole('button', { name: 'เริ่มเก็บตัวอักษร' }).click();
+  await page.clock.runFor(5300);
+  const bag = page.getByRole('contentinfo', { name: 'กระเป๋าอักษร' });
+  await expect(bag).toHaveClass(/tutorial-bag-focus/);
+  await expect(bag).toBeInViewport();
+  await expect(
+    page.getByRole('button', { name: 'เห็น C ในกระเป๋าแล้ว ไปฝึกเปิดกล่อง' }),
+  ).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 test('mobile Home and play controls fit the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

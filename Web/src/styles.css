@@ -2834,3 +2834,129 @@ kbd {
     font-size: 10px;
   }
 }
+
+.tutorial-objective {
+  flex: 1;
+}
+.steering-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 7px 0 0;
+  list-style: none;
+  font-size: 11px;
+  color: #96abbd;
+}
+.steering-checklist li {
+  padding: 5px 9px;
+  border: 1px solid #36515d;
+  border-radius: 7px;
+}
+.steering-checklist li[aria-current='step'] {
+  border-color: #ffd56a;
+  color: #ffd56a;
+}
+.steering-checklist li.done {
+  color: #73edbb;
+  background: #183d32;
+}
+.tutorial-review {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-shrink: 0;
+  padding: 18px;
+  margin: 0 0 15px;
+  border: 1px solid #3d9472;
+  border-radius: 14px;
+  background: #142e29;
+  color: #e6fff5;
+  outline-offset: 3px;
+}
+.tutorial-review > div {
+  flex: 1;
+}
+.tutorial-review h2 {
+  font-size: 19px;
+  margin: 6px 0;
+}
+.tutorial-review p {
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 0;
+  color: #c4e5d8;
+}
+.tutorial-review button {
+  flex-shrink: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.tutorial-bag-focus {
+  border: 2px solid #72f0b9;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  background: #16352c;
+  box-shadow: 0 0 0 4px #57e6ae20;
+  animation: tutorial-bag-pulse 2s ease-in-out 3;
+}
+.tutorial-bag-focus .tray-label > span {
+  color: #b9ffdf;
+}
+.tutorial-bag-focus .tutorial-new-letter {
+  color: #15291e;
+  background: #ffd56a;
+  border-color: #ffe6a7;
+  box-shadow: 0 0 12px #ffc54255;
+}
+@keyframes tutorial-bag-pulse {
+  50% {
+    border-color: #ffe29b;
+    box-shadow: 0 0 0 7px #ffd56a35;
+  }
+}
+.tutorial-bag-focus[data-reduced-motion='true'] {
+  animation: none;
+}
+.touch-controls[hidden] {
+  display: none;
+}
+.reviewing-lesson {
+  overflow-y: auto;
+}
+.reviewing-lesson .game-field {
+  min-height: 150px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-bag-focus {
+    animation: none;
+  }
+}
+@media (max-width: 620px) {
+  .tutorial-review {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 13px;
+  }
+  .tutorial-review h2 {
+    font-size: 16px;
+  }
+  .tutorial-review p {
+    font-size: 12px;
+  }
+  .tutorial-review button {
+    font-size: 12px;
+  }
+  .tutorial-bag-focus .control-hint {
+    display: none;
+  }
+  .steering-checklist {
+    gap: 4px;
+    font-size: 9px;
+  }
+  .steering-checklist li {
+    padding: 3px 5px;
+  }
+}

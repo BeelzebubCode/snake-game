@@ -3,6 +3,7 @@ import type { CSSProperties, FormEvent } from 'react';
 import { ChestArt, GardenArt, SnakeMark } from './components/Art';
 import Modal from './components/Modal';
 import TutorialLesson from './components/TutorialLesson';
+import TutorialReview from './components/TutorialReview';
 import { LESSONS } from './game/tutorial';
 import SettingsPanel from './components/SettingsPanel';
 import { loadDictionary } from './data/vocabulary';
@@ -329,11 +330,12 @@ function GameScreen({
     engine.submitWord(draft);
   };
   const phase = s.phase;
+  const reviewingBag = phase === 'lessonReview' && [2, 3].includes(s.lesson);
   const currentMap = mapFor(s.mapStage, s.settings.map);
   const directionPreview = DIRECTION_LABELS[s.nextDirection];
   return (
     <div
-      className="game-screen"
+      className={'game-screen' + (phase === 'lessonReview' ? ' reviewing-lesson' : '')}
       ref={playRef}
       data-map={currentMap.id}
       style={
@@ -417,7 +419,25 @@ function GameScreen({
           <span className="tutorial-task-step">
             {s.lesson + 1} / {LESSONS.length}
           </span>
-          <p>{LESSONS[s.lesson].task}</p>
+          <div className="tutorial-objective">
+            <p>{LESSONS[s.lesson].task}</p>
+            {s.lesson === 0 && (
+              <ol className="steering-checklist" aria-label="ทิศทางที่ฝึกแล้ว">
+                {(['up', 'left', 'down', 'right'] as Direction[]).map((direction, index) => (
+                  <li
+                    key={direction}
+                    className={s.practicedDirections.includes(direction) ? 'done' : ''}
+                    aria-current={s.practicedDirections.length === index ? 'step' : undefined}
+                  >
+                    {s.practicedDirections.includes(direction)
+                      ? '✓'
+                      : ['W ↑', 'A ←', 'S ↓', 'D →'][index]}{' '}
+                    {DIRECTION_LABELS[direction].name}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
           <button className="text-button" onClick={() => engine.showLesson()}>
             ดูคำอธิบาย
           </button>
@@ -447,7 +467,11 @@ function GameScreen({
           </div>
         )}
       </main>
-      <footer className="game-tray">
+      <footer
+        className={'game-tray' + (reviewingBag ? ' tutorial-bag-focus' : '')}
+        data-reduced-motion={s.settings.reducedMotion}
+        aria-label="กระเป๋าอักษร"
+      >
         <div className="tray-label">
           <span>กระเป๋าอักษร</span>
           <strong>
@@ -457,7 +481,13 @@ function GameScreen({
         <div className="inventory-strip" aria-label="ตัวอักษรที่เก็บได้">
           {s.inventory.length ? (
             s.inventory.map((letter, i) => (
-              <span className="letter-tile small" key={i}>
+              <span
+                className={
+                  'letter-tile small' +
+                  (reviewingBag && (s.lesson === 2 || i > 0) ? ' tutorial-new-letter' : '')
+                }
+                key={i}
+              >
                 {letter}
               </span>
             ))
@@ -474,7 +504,10 @@ function GameScreen({
           </span>
         </div>
       </footer>
-      <div className="touch-controls" aria-label="ปุ่มควบคุมบนจอ">
+      {phase === 'lessonReview' && (
+        <TutorialReview step={s.lesson} onContinue={() => engine.continueLesson()} />
+      )}
+      <div className="touch-controls" aria-label="ปุ่มควบคุมบนจอ" hidden={phase === 'lessonReview'}>
         <div className="dpad">
           <button
             aria-label="เลี้ยวขึ้น"
@@ -672,43 +705,65 @@ function GameScreen({
       )}
       {phase === 'chest' && s.reward && (
         <Modal
-          title={s.reward.revealed ? 'ของขวัญของคุณมาแล้ว!' : 'กำลังเปิดกล่องสมบัติ…'}
+          title={
+            !s.reward.opened
+              ? 'ลองเปิดกล่องเงิน'
+              : s.reward.revealed
+                ? 'ของขวัญของคุณมาแล้ว!'
+                : 'กำลังเปิดกล่องสมบัติ…'
+          }
           className={'chest-modal ' + s.reward.kind}
         >
           <span className="eyebrow">
             {CHESTS[s.reward.kind].title} · {CHESTS[s.reward.kind].count} ตัวอักษร
           </span>
-          <div className={'chest-display ' + (s.reward.revealed ? 'revealed' : 'rolling')}>
+          <div
+            className={
+              'chest-display ' + (s.reward.revealed ? 'revealed' : s.reward.opened ? 'rolling' : '')
+            }
+          >
             <div className="reward-aura" />
             <ChestArt kind={s.reward.kind} open={s.reward.revealed} />
           </div>
-          <div
-            className="reward-letters"
-            aria-label={
-              s.reward.revealed ? 'ได้รับ ' + s.reward.letters.join(' ') : 'กำลังสุ่มตัวอักษร'
-            }
-            aria-live="polite"
-          >
-            {s.reward.letters.map((letter, i) => (
-              <span
-                className={'letter-tile ' + (s.reward!.revealed ? 'reward-reveal' : 'shuffling')}
-                style={{ '--delay': i * 90 + 'ms' } as CSSProperties}
-                key={i}
-              >
-                {s.reward!.revealed
-                  ? letter
-                  : String.fromCharCode(65 + ((Math.floor(s.reward!.elapsed / 80) + i * 7) % 26))}
-              </span>
-            ))}
-          </div>
-          <p className="subtle">เวลาบนสนามหยุดให้แล้ว ค่อย ๆ เปิดได้เลย</p>
-          <button
-            className="button primary full"
-            disabled={!s.reward.revealed}
-            onClick={() => engine.claimChest()}
-          >
-            เก็บใส่กระเป๋า +{CHESTS[s.reward.kind].count} <span>✓</span>
-          </button>
+          {s.reward.opened && (
+            <div
+              className="reward-letters"
+              aria-label={
+                s.reward.revealed ? 'ได้รับ ' + s.reward.letters.join(' ') : 'กำลังสุ่มตัวอักษร'
+              }
+              aria-live="polite"
+            >
+              {s.reward.letters.map((letter, i) => (
+                <span
+                  className={'letter-tile ' + (s.reward!.revealed ? 'reward-reveal' : 'shuffling')}
+                  style={{ '--delay': i * 90 + 'ms' } as CSSProperties}
+                  key={i}
+                >
+                  {s.reward!.revealed
+                    ? letter
+                    : String.fromCharCode(65 + ((Math.floor(s.reward!.elapsed / 80) + i * 7) % 26))}
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="subtle">
+            {s.tutorial
+              ? 'กล่องเงินให้ 2 อักษร บทนี้เตรียม A และ T ให้ เมื่อกดรับจะเพิ่มในกระเป๋าใต้สนาม เกมหยุดรอทุกขั้น ไม่ต้องรีบ'
+              : 'เวลาบนสนามหยุดให้แล้ว ค่อย ๆ เปิดได้เลย'}
+          </p>
+          {!s.reward.opened ? (
+            <button className="button primary full" onClick={() => engine.openTutorialChest()}>
+              เริ่มเปิดกล่องเงิน
+            </button>
+          ) : (
+            <button
+              className="button primary full"
+              disabled={!s.reward.revealed}
+              onClick={() => engine.claimChest()}
+            >
+              เก็บใส่กระเป๋า +{CHESTS[s.reward.kind].count} <span>✓</span>
+            </button>
+          )}
           <button className="text-button centered" onClick={() => engine.pause()}>
             พักก่อน
           </button>

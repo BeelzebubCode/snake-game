@@ -7,6 +7,7 @@ export type VocabularyFilter = Level | 'all' | 'easy' | 'medium' | 'hard';
 export type ChestKind = 'silver' | 'gold' | 'purple' | 'red';
 export type Phase =
   | 'lesson'
+  | 'lessonReview'
   | 'countdown'
   | 'playing'
   | 'challenge'
@@ -54,6 +55,7 @@ export interface Reward {
   letters: string[];
   elapsed: number;
   revealed: boolean;
+  opened: boolean;
 }
 export interface WordResult {
   entry: Word;
@@ -87,6 +89,7 @@ export interface GameState {
   notice: string;
   tutorial: boolean;
   lesson: number;
+  practicedDirections: Direction[];
   deathReason: string;
   sessionId: string;
 }

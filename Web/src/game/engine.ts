@@ -41,6 +41,7 @@ export class GameEngine {
   private id = 0;
   private boosted = false;
   private tutorialBoostMoves = 0;
+  private tutorialDirectionMoves = 0;
   constructor(
     settings: Settings = DEFAULT_SETTINGS,
     tutorial = false,
@@ -80,6 +81,7 @@ export class GameEngine {
       notice: '',
       tutorial,
       lesson: 0,
+      practicedDirections: [],
       deathReason: '',
       sessionId: Math.random().toString(36).slice(2) + Date.now().toString(36),
     };
@@ -113,7 +115,9 @@ export class GameEngine {
     return this.state.phase === 'playing' ? Math.min(1, this.moveAccumulator / this.interval) : 1;
   }
   private get interval() {
-    return 1000 / (SPEEDS[this.state.settings.speed] * (this.boosted ? 1.7 : 1));
+    const speed =
+      this.state.tutorial && this.state.lesson === 0 ? 2.5 : SPEEDS[this.state.settings.speed];
+    return 1000 / (speed * (this.boosted ? 1.7 : 1));
   }
   setBoost(value: boolean) {
     const progress = this.moveAccumulator / this.interval;
@@ -190,7 +194,7 @@ export class GameEngine {
         s.phase = 'gameOver';
         this.publish();
       }
-    } else if (s.phase === 'chest' && s.reward && !s.reward.revealed) {
+    } else if (s.phase === 'chest' && s.reward?.opened && !s.reward.revealed) {
       s.reward.elapsed += dt;
       if (s.reward.elapsed >= (s.settings.reducedMotion ? 0 : 1600)) {
         s.reward.revealed = true;
@@ -306,16 +310,26 @@ export class GameEngine {
       this.fillLetters();
       this.sound('collect');
       if (s.tutorial && s.lesson === 2) {
-        this.nextLesson();
+        this.finishPractice();
+        return;
+      }
+    }
+    if (s.tutorial && s.lesson === 0) {
+      const target = (['up', 'left', 'down', 'right'] as Direction[])[s.practicedDirections.length];
+      this.tutorialDirectionMoves = s.direction === target ? this.tutorialDirectionMoves + 1 : 0;
+      if (this.tutorialDirectionMoves >= 3) {
+        s.practicedDirections.push(target);
+        this.tutorialDirectionMoves = 0;
+        this.publish();
+      }
+      if (s.practicedDirections.length === 4) {
+        this.finishPractice();
         return;
       }
     }
     if (s.tutorial && s.lesson === 1 && this.boosted) this.tutorialBoostMoves += 1;
-    if (
-      s.tutorial &&
-      ((s.lesson === 0 && s.direction === 'up') || (s.lesson === 1 && this.tutorialBoostMoves >= 5))
-    ) {
-      this.nextLesson();
+    if (s.tutorial && s.lesson === 1 && this.tutorialBoostMoves >= 5) {
+      this.finishPractice();
       return;
     }
     if (s.chest && same(s.chest, head)) {
@@ -326,7 +340,8 @@ export class GameEngine {
           ? ['A', 'T']
           : Array.from({ length: CHESTS[kind].count }, () => this.randomLetter()),
         elapsed: 0,
-        revealed: s.settings.reducedMotion,
+        revealed: !s.tutorial && s.settings.reducedMotion,
+        opened: !s.tutorial,
       };
       s.chest = null;
       s.nextChestAt = s.elapsed + 20_000;
@@ -358,6 +373,25 @@ export class GameEngine {
       this.publish();
     }
   }
+  private finishPractice() {
+    const s = this.state;
+    s.phase = 'lessonReview';
+    s.previousSnake = s.snake.map((p) => ({ ...p }));
+    this.queued = [];
+    this.boosted = false;
+    this.publish();
+  }
+  continueLesson() {
+    if (!this.state.tutorial || this.state.phase !== 'lessonReview') return;
+    this.nextLesson();
+  }
+  openTutorialChest() {
+    const s = this.state;
+    if (!s.tutorial || s.phase !== 'chest' || !s.reward || s.reward.opened) return;
+    s.reward.opened = true;
+    s.reward.revealed = s.settings.reducedMotion;
+    this.publish();
+  }
   private nextLesson() {
     const s = this.state;
     s.lesson += 1;
@@ -375,6 +409,8 @@ export class GameEngine {
   private prepareLessonField() {
     const s = this.state;
     this.tutorialBoostMoves = 0;
+    this.tutorialDirectionMoves = 0;
+    s.practicedDirections = [];
     s.snake = this.startSnake();
     s.previousSnake = s.snake.map((p) => ({ ...p }));
     s.direction = 'right';
@@ -385,10 +421,10 @@ export class GameEngine {
     // Practice objects are scripted and stay until collected, even after a retry.
     if (s.lesson === 2)
       s.letters = [
-        { id: ++this.id, letter: 'C', x: 11, y: 11, expiresAt: Number.MAX_SAFE_INTEGER },
+        { id: ++this.id, letter: 'C', x: 18, y: 11, expiresAt: Number.MAX_SAFE_INTEGER },
       ];
     if (s.lesson === 3)
-      s.chest = { id: ++this.id, kind: 'silver', x: 11, y: 11, expiresAt: Number.MAX_SAFE_INTEGER };
+      s.chest = { id: ++this.id, kind: 'silver', x: 18, y: 11, expiresAt: Number.MAX_SAFE_INTEGER };
     if (s.lesson === 4) s.portal = { x: 12, y: 10, expiresAt: Number.MAX_SAFE_INTEGER };
   }
   showLesson() {
@@ -476,12 +512,12 @@ export class GameEngine {
   }
   claimChest() {
     const s = this.state;
-    if (s.phase !== 'chest' || !s.reward?.revealed) return false;
+    if (s.phase !== 'chest' || !s.reward?.opened || !s.reward.revealed) return false;
     s.inventory.push(...s.reward.letters);
     s.notice = CHESTS[s.reward.kind].title + ' เพิ่ม ' + s.reward.letters.length + ' ตัวอักษร';
     s.reward = null;
     if (s.tutorial) {
-      this.nextLesson();
+      this.finishPractice();
       return true;
     }
     this.beginCountdown();
