@@ -1,5 +1,7 @@
 # LexiSnake V2 — Neon Web Game
 
+[เล่นออนไลน์](https://lexisnake.vercel.app) · [GitHub Actions](https://github.com/BeelzebubCode/snake-game/actions/workflows/web-ci.yml)
+
 เกมเว็บ React + TypeScript + Phaser + Vite ที่เล่นได้จริง พัฒนาแยกจาก Python ในโฟลเดอร์ Web/
 
 ## เปิดเล่นในเครื่อง

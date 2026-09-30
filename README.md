@@ -6,6 +6,8 @@
 
 ## V2 — เล่นบนเว็บ
 
+### [เปิดเล่น LexiSnake V2](https://lexisnake.vercel.app)
+
 เวอร์ชันเว็บอยู่ใน [Web/](Web/README.md): React + TypeScript + Phaser พร้อมแมพ 4 แบบ ตัวเลือกสีงู หัวใจฟื้นคืนชีพ และกล่องตัวอักษร
 
 เปิดในเครื่องด้วย `cd Web && npm ci && npm run dev`

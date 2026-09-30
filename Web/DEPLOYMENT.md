@@ -2,6 +2,8 @@
 
 ## เส้นทางการเผยแพร่
 
+เว็บ production: [lexisnake.vercel.app](https://lexisnake.vercel.app)
+
 - GitHub repository: [BeelzebubCode/snake-game](https://github.com/BeelzebubCode/snake-game)
 - Vercel project: **lexisnake** ในทีม **beelzebubcodes-projects**
 - Production branch: **main**
