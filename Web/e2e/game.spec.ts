@@ -152,11 +152,16 @@ test('revival spends one heart, clamps the score, and preserves its timer on pau
   await expect(page.getByTestId('score')).toHaveText('0');
 });
 test('collects a silver chest through movement and claims two letters', async ({ page }) => {
+  // Place a chest ahead so this checks collection without frame-sensitive steering.
   await page.route('**/src/game/engine.ts', async (route) => {
     const response = await route.fetch();
     const original = await response.text();
-    const body = original.replace('random = Math.random', 'random = () => 0');
-    expect(body).not.toBe(original);
+    let body = original.replace('random = Math.random', 'random = () => 0');
+    body = body.replace(
+      'chest: null,',
+      'chest: { id: 999, kind: "silver", x: 11, y: 11, expiresAt: 30000 },',
+    );
+    expect(body).toContain('chest: { id: 999, kind: "silver", x: 11, y: 11, expiresAt: 30000 },');
     await route.fulfill({ response, body });
   });
   await page.goto('/');
@@ -164,13 +169,14 @@ test('collects a silver chest through movement and claims two letters', async ({
   await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
   await page.getByRole('button', { name: /เคยเล่นแล้ว พร้อมเลย/ }).click();
   await expect(page.locator('canvas')).toBeVisible();
-  await page.clock.runFor(7460);
-  await page.keyboard.press('ArrowUp');
-  await page.clock.runFor(2000);
-  await page.keyboard.press('ArrowLeft');
-  await page.clock.runFor(7000);
+  await page.clock.runFor(5400);
   await expect(page.getByRole('heading', { name: 'ของขวัญของคุณมาแล้ว!' })).toBeVisible();
   await expect(page.locator('.reward-letters .letter-tile')).toHaveCount(2);
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(3);
+  // Reading the reward must keep the world paused and must not claim it early.
+  await page.clock.runFor(10000);
+  await expect(page.getByRole('heading', { name: 'ของขวัญของคุณมาแล้ว!' })).toBeVisible();
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(3);
   await page.getByRole('button', { name: 'เก็บใส่กระเป๋า +2' }).click();
   await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(5);
 });
