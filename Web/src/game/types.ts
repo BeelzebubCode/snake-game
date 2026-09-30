@@ -1,3 +1,5 @@
+import type { MessageKey } from '../i18n/en';
+export type Language = 'en' | 'th';
 export type Direction = 'up' | 'down' | 'left' | 'right';
 export type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 export type Speed = 'slow' | 'normal' | 'fast' | 'expert';
@@ -22,6 +24,7 @@ export interface Cell {
   y: number;
 }
 export interface Settings {
+  language: Language;
   speed: Speed;
   portalSeconds: number;
   level: VocabularyFilter;
@@ -100,6 +103,7 @@ export const LETTER_LIFETIME = 30_000,
   LETTER_COUNT = 3,
   REVIVE_TIME = 30_000;
 export const DEFAULT_SETTINGS: Settings = {
+  language: 'en',
   speed: 'slow',
   skin: 'mint',
   snakeStyle: 'smooth',
@@ -113,10 +117,10 @@ export const DEFAULT_SETTINGS: Settings = {
 export const SPEEDS: Record<Speed, number> = { slow: 6, normal: 8, fast: 12, expert: 16 };
 export const CHESTS: Record<
   ChestKind,
-  { title: string; count: number; color: string; weight: number }
+  { title: MessageKey; count: number; color: string; weight: number }
 > = {
-  silver: { title: 'กล่องเงิน', count: 2, color: '#becbde', weight: 45 },
-  gold: { title: 'กล่องทอง', count: 3, color: '#ffc542', weight: 30 },
-  purple: { title: 'กล่องม่วง', count: 4, color: '#b778ff', weight: 18 },
-  red: { title: 'กล่องแดง', count: 5, color: '#ff617d', weight: 7 },
+  silver: { title: 'chest.silver', count: 2, color: '#becbde', weight: 45 },
+  gold: { title: 'chest.gold', count: 3, color: '#ffc542', weight: 30 },
+  purple: { title: 'chest.purple', count: 4, color: '#b778ff', weight: 18 },
+  red: { title: 'chest.red', count: 5, color: '#ff617d', weight: 7 },
 };

@@ -1,3 +1,4 @@
+import type { MessageKey } from '../i18n/en';
 import type { Cell, Direction, GameState, MapChoice, SkinId } from './types';
 import { CELL, COLS, ROWS } from './types';
 export const MAP_SCORE_STEP = 1500;
@@ -11,7 +12,7 @@ export const MAPS = [
   {
     id: 'midnight',
     name: 'Neon Grid',
-    description: 'เมืองนีออน',
+    description: 'map.midnight',
     background: 0x12121c,
     grid: 0x242638,
     accent: 0x2ee6a0,
@@ -20,7 +21,7 @@ export const MAPS = [
   {
     id: 'forest',
     name: 'Firefly Forest',
-    description: 'ป่าหิ่งห้อย',
+    description: 'map.forest',
     background: 0x081f1d,
     grid: 0x153a30,
     accent: 0x68ef9e,
@@ -29,7 +30,7 @@ export const MAPS = [
   {
     id: 'ocean',
     name: 'Midnight Ocean',
-    description: 'มหาสมุทร',
+    description: 'map.ocean',
     background: 0x08182d,
     grid: 0x163651,
     accent: 0x38bdf8,
@@ -38,7 +39,7 @@ export const MAPS = [
   {
     id: 'volcano',
     name: 'Ember Valley',
-    description: 'หุบเขาภูเขาไฟ',
+    description: 'map.volcano',
     background: 0x24121e,
     grid: 0x442537,
     accent: 0xffac55,
@@ -50,11 +51,14 @@ export function mapFor(stage: number, choice: MapChoice = 'auto') {
     ? MAPS[(Number.isFinite(stage) ? Math.max(0, Math.floor(stage)) : 0) % MAPS.length]
     : (MAPS.find((map) => map.id === choice) ?? MAPS[0]);
 }
-export const DIRECTION_LABELS: Record<Direction, { arrow: string; name: string; angle: number }> = {
-  up: { arrow: '↑', name: 'ขึ้น', angle: -Math.PI / 2 },
-  down: { arrow: '↓', name: 'ลง', angle: Math.PI / 2 },
-  left: { arrow: '←', name: 'ซ้าย', angle: Math.PI },
-  right: { arrow: '→', name: 'ขวา', angle: 0 },
+export const DIRECTION_LABELS: Record<
+  Direction,
+  { arrow: string; name: MessageKey; angle: number }
+> = {
+  up: { arrow: '↑', name: 'direction.up', angle: -Math.PI / 2 },
+  down: { arrow: '↓', name: 'direction.down', angle: Math.PI / 2 },
+  left: { arrow: '←', name: 'direction.left', angle: Math.PI },
+  right: { arrow: '→', name: 'direction.right', angle: 0 },
 };
 export const hex = (color: number) => '#' + color.toString(16).padStart(6, '0');
 export function mixColor(a: number, b: number, t: number): number {

@@ -1,81 +1,63 @@
-export const LESSONS = [
-  {
-    title: 'ลองบังคับเจ้างู',
-    summary: 'งูเดินเองเมื่อเริ่ม ลองเลี้ยวครบ 4 ทิศตามคำแนะนำบนสนาม',
-    details: [
-      'ใช้ลูกศรหรือ W A S D เลี้ยวได้ 4 ทิศ แต่กลับหลังเข้าตัวเองไม่ได้',
-      'บนมือถือใช้ปุ่มลูกศรใต้สนาม ลองขึ้น → ซ้าย → ลง → ขวา โดยเดินแต่ละทิศอย่างน้อย 3 ช่อง',
-    ],
-    task: 'ลองเลี้ยวขึ้น → ซ้าย → ลง → ขวา แล้วกดไปต่อเมื่อพร้อม',
-    action: 'เริ่มฝึกเลี้ยว',
-    tip: 'ใช้ความเร็วระดับช้าเหมือนรอบจริง และรอให้กดไปบทถัดไปเอง ชนแล้วลองบทเดิมใหม่ได้โดยไม่เสียหัวใจ',
-  },
-  {
-    title: 'กด Shift เพื่อเร่งความเร็ว',
-    summary: 'กด Shift ค้างไว้ แล้วดูเจ้างูเคลื่อนที่เร็วขึ้น',
-    details: [
-      'Shift หรือ Space เร่งความเร็ว 1.7 เท่าขณะกดค้าง ปล่อยแล้วกลับสู่ความเร็วปกติ',
-      'มือถือกดปุ่ม “เร่ง ↗” ค้างไว้ ลองเร่งจนเจ้างูเดินผ่านไป 5 ช่อง',
-    ],
-    task: 'หลังนับถอยหลัง กด Shift / Space หรือปุ่มเร่งค้างไว้',
-    action: 'ลองเร่งความเร็ว',
-    tip: 'กด P หรือ Esc เพื่อพักได้ระหว่างเดินงู',
-  },
-  {
-    title: 'เก็บอักษรใส่กระเป๋า',
-    summary: 'เดินไปทางขวา เก็บตัว C สีเหลืองด้านหน้า',
-    details: [
-      'เก็บแล้วหางจะยาวขึ้น และ C จะเข้าไปอยู่ใน “กระเป๋าอักษร” ใต้สนาม เกมจะหยุดและไฮไลต์จุดนี้ให้ดู',
-      'รอบจริงมีอักษรเดี่ยว 3 ตัว แต่ละตัวหายหลัง 30 วินาทีแล้วเติมใหม่',
-    ],
-    task: 'เดินไปทางขวาเพื่อเก็บ C แล้วดูในกระเป๋าด้านล่าง',
-    action: 'เริ่มเก็บตัวอักษร',
-    tip: 'บทนี้มี C เพียงตัวเดียวและไม่หมดอายุ หลังเก็บให้ดูกระเป๋า แล้วค่อยกดไปต่อ',
-  },
-  {
-    title: 'กล่องสุ่มตัวอักษร',
-    summary: 'เก็บกล่องเงิน → กดเริ่มเปิด → ดูรางวัล → รับเข้ากระเป๋า',
-    details: [
-      'เงินให้ 2 · ทองให้ 3 · ม่วงให้ 4 · แดงให้ 5 ตัวอักษร รางวัลรอบจริงจะสุ่มใหม่เมื่อเก็บกล่อง',
-      'เกมหยุดรอทุกขั้น กดเริ่มเปิดเมื่อพร้อม แล้วกด “เก็บใส่กระเป๋า” เพื่อรับ A และ T จากนั้นเราจะชี้ให้ดูอักษรใหม่ใต้สนาม',
-    ],
-    task: 'เดินไปทางขวา เก็บกล่องเงิน แล้วกดรับ A และ T',
-    action: 'ลองเปิดกล่อง',
-    tip: 'รอบจริงกล่องที่ยังไม่เก็บอยู่บนสนามได้ 30 วินาที',
-  },
-  {
-    title: 'เข้าประตูสีเขียว',
-    summary: 'มี C A T ครบแล้ว พาเจ้างูเข้าไปในประตู',
-    details: [
-      'เดินไปทางขวาจนหัวงูแตะประตูสีเขียว โลกจะหยุดแล้วเปิดหน้าเรียงคำ',
-      'บทนี้จะมีเฉพาะประตู ไม่มีตัวอักษรหรือกล่องเกิดแทรก',
-    ],
-    task: 'เดินไปทางขวาเข้าประตูสีเขียว',
-    action: 'ลองเข้าประตูกัน',
-    tip: 'รอบจริงประตูแรกเกิดหลังเดินเกม 15 วินาที และเปิดอยู่ 60 วินาที',
-  },
-  {
-    title: 'เรียง CAT ให้เป็นคำ',
-    summary: 'พิมพ์ CAT หรือแตะ C → A → T แล้วส่งคำศัพท์',
-    details: [
-      'กด Enter หรือ “ส่งคำศัพท์” เพื่อยืนยัน CAT แปลว่า แมว และได้ 450 คะแนน',
-      'Backspace ลบตัวท้าย หรือใช้ปุ่มลบ/ล้างคำ ถ้านึกไม่ออกกด “ช่วยเรียง”',
-      'รอบจริงมีเวลาเริ่มต้น 1 นาที ปรับได้ในตั้งค่า ถ้าหมดเวลาหางลด 1 ข้อ โดยตัวอักษรยังอยู่ครบ',
-    ],
-    task: 'เรียง CAT แล้วกด Enter หรือส่งคำศัพท์',
-    action: 'ลองเรียงคำ',
-    tip: 'เริ่มจับเวลาเมื่อกดปุ่มด้านล่าง โหมดฝึกหมดเวลาแล้วลองใหม่ได้โดยไม่เสียหัวใจ',
-  },
-  {
-    title: 'พักเกมและใช้หัวใจ',
-    summary: 'พร้อมแล้ว! มารู้กติกาของรอบจริงก่อนเริ่ม',
-    details: [
-      'กด P หรือ Esc เพื่อพัก ระหว่างเดินต้องหลบขอบสนามและลำตัวเอง',
-      'มีหัวใจ 3 ดวง เมื่อตายให้ตอบคำอังกฤษจากคำแปลไทยภายใน 30 วินาที ตอบถูกใช้ 1 หัวใจ หัก 100 คะแนน โดยคะแนนต่ำสุดเป็น 0',
-      'ตอบผิดลองใหม่ได้ในเวลาที่เหลือ ถ้าหมดเวลาหรือใช้หัวใจครบแล้วชนอีกครั้งจะจบรอบ',
-    ],
-    task: 'อ่านกติกาแล้วจบบทเรียน',
-    action: 'จบบทเรียน',
-    tip: 'หลังออกประตูหรือฟื้นคืนชีพ เลือกทิศตามลูกศรหน้าหัวงูก่อนจบนับถอยหลังได้',
-  },
-] as const;
+import { translator } from '../i18n/messages';
+import type { Language } from './types';
+export function getLessons(language: Language) {
+  const t = translator(language);
+  return [
+    {
+      title: t('lesson.steer.title'),
+      summary: t('lesson.steer.summary'),
+      details: [t('lesson.steer.controls'), t('lesson.steer.mobile')],
+      task: t('lesson.steer.task'),
+      action: t('lesson.steer.action'),
+      tip: t('lesson.steer.tip'),
+    },
+    {
+      title: t('lesson.boost.title'),
+      summary: t('lesson.boost.summary'),
+      details: [t('lesson.boost.controls'), t('lesson.boost.mobile')],
+      task: t('lesson.boost.task'),
+      action: t('lesson.boost.action'),
+      tip: t('lesson.boost.tip'),
+    },
+    {
+      title: t('lesson.collect.title'),
+      summary: t('lesson.collect.summary'),
+      details: [t('lesson.collect.explain'), t('lesson.collect.spawns')],
+      task: t('lesson.collect.task'),
+      action: t('lesson.collect.action'),
+      tip: t('lesson.collect.tip'),
+    },
+    {
+      title: t('lesson.chest.title'),
+      summary: t('lesson.chest.summary'),
+      details: [t('lesson.chest.tiers'), t('lesson.chest.steps')],
+      task: t('lesson.chest.task'),
+      action: t('lesson.chest.action'),
+      tip: t('lesson.chest.tip'),
+    },
+    {
+      title: t('lesson.portal.title'),
+      summary: t('lesson.portal.summary'),
+      details: [t('lesson.portal.explain'), t('lesson.portal.clean')],
+      task: t('lesson.portal.task'),
+      action: t('lesson.portal.action'),
+      tip: t('lesson.portal.tip'),
+    },
+    {
+      title: t('lesson.word.title'),
+      summary: t('lesson.word.summary'),
+      details: [t('lesson.word.submit'), t('lesson.word.tools'), t('lesson.word.timer')],
+      task: t('lesson.word.task'),
+      action: t('lesson.word.action'),
+      tip: t('lesson.word.tip'),
+    },
+    {
+      title: t('lesson.hearts.title'),
+      summary: t('lesson.hearts.summary'),
+      details: [t('lesson.hearts.pause'), t('lesson.hearts.revive'), t('lesson.hearts.retry')],
+      task: t('lesson.hearts.task'),
+      action: t('lesson.hearts.action'),
+      tip: t('lesson.hearts.tip'),
+    },
+  ] as const;
+}

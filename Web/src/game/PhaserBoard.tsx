@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import type { GameEngine } from './engine';
 import { CELL, CHESTS, COLS, ROWS } from './types';
@@ -22,6 +23,7 @@ interface Particle {
   color: number;
 }
 export default function PhaserBoard({ engine }: { engine: GameEngine }) {
+  const { t } = useI18n();
   const host = useRef<HTMLDivElement>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -187,10 +189,7 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
               }
             });
             this.events.once('shutdown', () => this.offSound?.());
-            this.game.canvas.setAttribute(
-              'aria-label',
-              'สนาม LexiSnake ใช้ลูกศรหรือ WASD เพื่อบังคับงู',
-            );
+            this.game.canvas.setAttribute('aria-label', t('board.accessible'));
             this.game.canvas.setAttribute('role', 'img');
           }
           update(time: number, delta: number) {
@@ -225,7 +224,7 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
                 .setPosition(x, y + 43)
                 .setText(
                   s.tutorial
-                    ? 'ฝึก'
+                    ? t('board.practice')
                     : Math.max(0, Math.ceil((s.portal.expiresAt - s.elapsed) / 1000)) + 's',
                 )
                 .setColor('#b9ffde')
@@ -378,12 +377,13 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
       disposed = true;
       game?.destroy(true);
     };
-  }, [engine]);
+  }, [engine, t]);
   return (
     <div className="canvas-host" ref={host} data-testid="game-board">
       {error && (
         <p className="render-error" role="alert">
-          เปิดสนามไม่ได้ ลองรีเฟรชหน้าเว็บอีกครั้ง
+          {' '}
+          {t('board.error')}{' '}
         </p>
       )}
     </div>

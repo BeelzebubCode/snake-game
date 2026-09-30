@@ -26,6 +26,7 @@ export function loadSave(): SaveData {
     return {
       ...defaults,
       settings: {
+        language: s.language === 'th' ? 'th' : 'en',
         skin: ['mint', 'purple', 'fire', 'ocean'].includes(s.skin) ? s.skin : 'mint',
         snakeStyle: s.snakeStyle === 'classic' ? 'classic' : 'smooth',
         showGrid: typeof s.showGrid === 'boolean' ? s.showGrid : true,

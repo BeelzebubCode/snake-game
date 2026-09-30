@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import type { ChestKind } from '../game/types';
 import { CHESTS } from '../game/types';
 export function SnakeMark({ large = false }: { large?: boolean }) {
@@ -63,13 +64,9 @@ export function ChestArt({ kind, open = false }: { kind: ChestKind; open?: boole
   );
 }
 export function GardenArt() {
+  const { t } = useI18n();
   return (
-    <svg
-      className="garden-art"
-      viewBox="0 0 720 550"
-      role="img"
-      aria-label="เจ้างูแสนซนในสวนพาสเทล มีตัวอักษรและกล่องสมบัติ"
-    >
+    <svg className="garden-art" viewBox="0 0 720 550" role="img" aria-label={t('art.garden')}>
       <defs>
         <pattern id="home-grid" width="37" height="30" patternUnits="userSpaceOnUse">
           <path d="M37 0H0V30" fill="none" stroke="#375b67" strokeOpacity=".2" />

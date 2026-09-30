@@ -2,21 +2,21 @@ import Modal from './Modal';
 import { ChestArt } from './Art';
 import { CHESTS } from '../game/types';
 import type { ChestKind } from '../game/types';
-import { LESSONS } from '../game/tutorial';
+import { getLessons } from '../game/tutorial';
+import { useI18n } from '../i18n';
 
 function LessonPicture({ step }: { step: number }) {
+  const { t } = useI18n();
   if (step === 3)
     return (
-      <div
-        className="lesson-chests"
-        role="img"
-        aria-label="กล่องเงิน 2 ทอง 3 ม่วง 4 แดง 5 ตัวอักษร"
-      >
+      <div className="lesson-chests" role="img" aria-label={t('tutorial.chestPicture')}>
         {(Object.keys(CHESTS) as ChestKind[]).map((kind) => (
           <div key={kind}>
             <ChestArt kind={kind} />
-            <strong>{CHESTS[kind].title}</strong>
-            <span>+{CHESTS[kind].count} อักษร</span>
+            <strong>{t(CHESTS[kind].title)}</strong>
+            <span>
+              +{CHESTS[kind].count} {t('common.letters')}
+            </span>
           </div>
         ))}
       </div>
@@ -28,13 +28,13 @@ function LessonPicture({ step }: { step: number }) {
       role="img"
       aria-label={
         [
-          'ภาพปุ่มทิศทางและงูเลี้ยวขึ้น',
-          'ภาพปุ่ม Shift และงูเร่งความเร็ว',
-          'ภาพเก็บ C เข้าในกระเป๋า',
+          t('tutorial.controlsPicture'),
+          t('tutorial.boostPicture'),
+          t('tutorial.collectPicture'),
           '',
-          'ภาพงูเดินเข้าประตูสีเขียว',
-          'ภาพเรียง C A T แล้วกด Enter',
-          'ภาพหัวใจสามดวงและปุ่มพักเกม',
+          t('tutorial.portalPicture'),
+          t('tutorial.wordPicture'),
+          t('tutorial.revivePicture'),
         ][step]
       }
     >
@@ -138,7 +138,8 @@ function LessonPicture({ step }: { step: number }) {
             C
           </text>
           <text x="450" y="132" textAnchor="middle" fill="#b6d2dd" fontSize="13">
-            กระเป๋า
+            {' '}
+            {t('tutorial.bagPicture')}{' '}
           </text>
         </g>
       )}
@@ -194,7 +195,8 @@ function LessonPicture({ step }: { step: number }) {
             ♥ ♥ ♥
           </text>
           <text x="168" y="136" fill="#b6cadd" fontSize="14" textAnchor="middle">
-            3 ครั้ง
+            {' '}
+            {t('tutorial.heartsPicture')}{' '}
           </text>
           <rect x="327" y="55" width="65" height="67" rx="10" fill="#20394a" stroke="#59758c" />
           <text x="359" y="99" fill="#dffff3" fontSize="30" textAnchor="middle">
@@ -219,15 +221,18 @@ export default function TutorialLesson({
   onContinue: () => void;
   onHome: () => void;
 }) {
+  const { t, language } = useI18n();
+  const LESSONS = getLessons(language);
   const lesson = LESSONS[step];
   return (
     <Modal title={lesson.title} onClose={onContinue} wide className="tutorial-modal">
       <div
         className="lesson-progress"
-        aria-label={'บทเรียน ' + (step + 1) + ' จาก ' + LESSONS.length}
+        aria-label={t('tutorial.step', { current: step + 1, total: LESSONS.length })}
       >
         <span>
-          บทเรียน {step + 1} / {LESSONS.length}
+          {' '}
+          {t('tutorial.lessonLabel')} {step + 1} / {LESSONS.length}
         </span>
         <div>
           {LESSONS.map((_, i) => (
@@ -243,12 +248,13 @@ export default function TutorialLesson({
         ))}
       </ul>
       <div className="soft-note">{notice || lesson.tip}</div>
-      <p className="lesson-paused">เกมหยุดรอให้อ่าน กดปุ่มหรือ × เมื่อพร้อมลงมือทำ</p>
+      <p className="lesson-paused">{t('tutorial.readAtPace')}</p>
       <button className="button primary full" autoFocus onClick={onContinue}>
         {lesson.action} <span>→</span>
       </button>
       <button className="text-button centered" onClick={onHome}>
-        กลับหน้า Home
+        {' '}
+        {t('common.home')}{' '}
       </button>
     </Modal>
   );

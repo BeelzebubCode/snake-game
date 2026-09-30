@@ -1,27 +1,32 @@
 import { useEffect, useRef } from 'react';
+import { useI18n } from '../i18n';
+import type { Translator } from '../i18n';
 
-const reviews: Record<number, { title: string; text: string; action: string }> = {
-  0: {
-    title: 'ลองครบทั้ง 4 ทิศแล้ว',
-    text: 'W ขึ้น · A ซ้าย · S ลง · D ขวา ใช้ลูกศรแทนได้ เกมหยุดรอแล้ว อ่านทบทวนได้จนกว่าจะพร้อม',
-    action: 'พร้อมแล้ว ไปฝึกเร่งความเร็ว',
-  },
-  1: {
-    title: 'เร่งความเร็วได้แล้ว',
-    text: 'กด Shift หรือ Space ค้างเพื่อเร่ง ปล่อยแล้วจะกลับสู่ความเร็วเดิม บนมือถือใช้ปุ่มเร่ง ↗',
-    action: 'พร้อมแล้ว ไปฝึกเก็บอักษร',
-  },
-  2: {
-    title: '↑ ตัว C อยู่ในกระเป๋าตรงนี้',
-    text: 'ดูกระเป๋าอักษรในกรอบสว่างด้านบน ใต้สนามเกม C ที่เพิ่งเก็บแสดงอยู่ที่นี่ และจำนวนเพิ่มเป็น 1 ตัว เราจะเก็บไว้ใช้เรียงคำในประตู',
-    action: 'เห็น C ในกระเป๋าแล้ว ไปฝึกเปิดกล่อง',
-  },
-  3: {
-    title: '↑ A และ T เพิ่มในกระเป๋าแล้ว',
-    text: 'อักษรใหม่ที่เน้นสีคือ A และ T จากกล่องเงิน รวมกับ C เดิมเป็น 3 ตัว รางวัลจากกล่องจะมาอยู่ในกระเป๋าเดียวกับอักษรที่เดินเก็บ',
-    action: 'เห็น C A T ครบแล้ว ไปฝึกเข้าประตู',
-  },
-};
+function getReviews(t: Translator) {
+  const reviews: Record<number, { title: string; text: string; action: string }> = {
+    0: {
+      title: t('review.steerTitle'),
+      text: t('review.steerText'),
+      action: t('review.steerNext'),
+    },
+    1: {
+      title: t('review.boostTitle'),
+      text: t('review.boostText'),
+      action: t('review.boostNext'),
+    },
+    2: {
+      title: t('review.collectTitle'),
+      text: t('review.collectText'),
+      action: t('review.collectNext'),
+    },
+    3: {
+      title: t('review.chestTitle'),
+      text: t('review.chestText'),
+      action: t('review.chestNext'),
+    },
+  };
+  return reviews;
+}
 export default function TutorialReview({
   step,
   onContinue,
@@ -29,6 +34,8 @@ export default function TutorialReview({
   step: number;
   onContinue: () => void;
 }) {
+  const { t } = useI18n();
+  const reviews = getReviews(t);
   const ref = useRef<HTMLElement>(null);
   const review = reviews[step];
   useEffect(() => {
@@ -39,7 +46,7 @@ export default function TutorialReview({
   return (
     <section ref={ref} tabIndex={-1} className="tutorial-review" aria-labelledby="review-title">
       <div>
-        <span className="eyebrow">เกมหยุดรอ · กดไปต่อเมื่อพร้อม</span>
+        <span className="eyebrow">{t('review.paused')}</span>
         <h2 id="review-title">{review.title}</h2>
         <p>{review.text}</p>
       </div>

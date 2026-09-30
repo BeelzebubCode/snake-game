@@ -1,4 +1,14 @@
 import { test, expect } from '@playwright/test';
+// Keep the original full gameplay suite as Thai-language coverage.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('lexisnake:v2'))
+      localStorage.setItem(
+        'lexisnake:v2',
+        JSON.stringify({ version: 2, settings: { language: 'th' } }),
+      );
+  });
+});
 test('Home, settings, returning-player flow, and wide board', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -321,6 +331,12 @@ test('portal typing and paste only use available letters, including duplicate co
   const input = page.getByLabel('คำศัพท์ภาษาอังกฤษ', { exact: true });
   await input.pressSequentially('good');
   await expect(input).toHaveValue('GOD'); // Only one O is in the bag.
+  // A rejected keystroke reports the missing letter, then a valid edit clears it.
+  await input.press('o');
+  await expect(page.getByTestId('word-feedback')).toContainText('ขาด: O');
+  await input.press('Backspace');
+  await expect(page.getByTestId('word-feedback')).toHaveText('');
+  await input.press('d');
   await input.pressSequentially('xyz');
   await expect(input).toHaveValue('GOD');
   await input.fill('');
@@ -339,6 +355,7 @@ test('portal typing and paste only use available letters, including duplicate co
   await page.evaluate(() => navigator.clipboard.writeText('GOOD'));
   await input.press('Control+v');
   await expect(input).toHaveValue('CAT'); // Reject an invalid paste as a whole.
+  await expect(page.getByTestId('word-feedback')).toContainText('ขาด: O');
   await input.evaluate((node) => (node as HTMLInputElement).setSelectionRange(1, 2));
   await input.press('p');
   await expect(input).toHaveValue('CPT');
@@ -348,6 +365,7 @@ test('portal typing and paste only use available letters, including duplicate co
   emptyBag = true;
   await enterPortal();
   await expect(input).toHaveAttribute('readonly', '');
+  await expect(page.getByTestId('word-feedback')).toContainText('กระเป๋ายังไม่มีอักษร');
   await input.pressSequentially('cat');
   await expect(input).toHaveValue('');
   await expect(page.getByRole('button', { name: 'ส่งคำศัพท์' })).toBeDisabled();

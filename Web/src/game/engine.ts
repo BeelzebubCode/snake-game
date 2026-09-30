@@ -1,3 +1,5 @@
+import { translate } from '../i18n/messages';
+import type { MessageKey, Params } from '../i18n/messages';
 import {
   canBuild,
   matchesLevel,
@@ -88,6 +90,9 @@ export class GameEngine {
     if (!tutorial) this.fillLetters();
     this.snapshot = structuredClone(this.state);
   }
+  private t(key: MessageKey, params?: Params) {
+    return translate(this.state.settings.language, key, params);
+  }
   private startSnake(): Cell[] {
     return [0, 1, 2, 3].map((i) => ({ x: 8 - i, y: 11 }));
   }
@@ -176,11 +181,11 @@ export class GameEngine {
       if (!s.challengeRemaining) {
         if (s.tutorial) {
           s.challengeRemaining = s.settings.portalSeconds * 1000;
-          s.error = 'ลองอีกครั้งได้เลย ตัวอักษรยังอยู่ครบ';
+          s.error = this.t('engine.practiceTimeout');
         } else {
           if (s.snake.length > 3) s.snake.pop();
           s.previousSnake = s.snake.map((p) => ({ ...p }));
-          s.notice = 'หมดเวลาแล้ว หางลด 1 ข้อ ตัวอักษรยังอยู่ครบ';
+          s.notice = this.t('engine.wordTimeout');
           this.beginCountdown();
         }
         this.publish();
@@ -188,7 +193,7 @@ export class GameEngine {
     } else if (s.phase === 'revive') {
       s.reviveRemaining = Math.max(0, s.reviveRemaining - dt);
       if (!s.reviveRemaining) {
-        s.deathReason = 'หมดเวลาฟื้นคืนชีพ';
+        s.deathReason = this.t('engine.reviveTimeout');
         s.phase = 'gameOver';
         this.publish();
       }
@@ -294,8 +299,8 @@ export class GameEngine {
     ) {
       this.die(
         head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS
-          ? 'เจ้างูชนขอบสวน'
-          : 'เจ้างูชนตัวเอง',
+          ? this.t('engine.hitWall')
+          : this.t('engine.hitBody'),
       );
       return;
     }
@@ -453,18 +458,23 @@ export class GameEngine {
     }
     this.publish();
   }
+  clearWordError() {
+    if (this.state.phase !== 'challenge' || !this.state.error) return;
+    this.state.error = '';
+    this.publish();
+  }
   submitWord(input: string): boolean {
     const s = this.state;
     if (s.phase !== 'challenge') return false;
     const word = normalizeWord(input);
     const entry = this.dictionary.find(word);
     let error = '';
-    if (!/^[A-Z]+$/.test(word)) error = 'ใส่คำภาษาอังกฤษก่อนนะ';
-    else if (!canBuild(word, s.inventory)) error = 'ตัวอักษรในกระเป๋าไม่พอสำหรับคำนี้';
-    else if (s.tutorial && word !== 'CAT') error = 'บทนี้ลองเรียง CAT (แมว) จาก C A T ก่อนนะ';
-    else if (!entry) error = 'ยังไม่พบคำนี้ในคลัง ลองคำอื่นได้เลย';
+    if (!/^[A-Z]+$/.test(word)) error = this.t('engine.enterWord');
+    else if (!canBuild(word, s.inventory)) error = this.t('engine.missingLetters');
+    else if (s.tutorial && word !== 'CAT') error = this.t('engine.tutorialWord');
+    else if (!entry) error = this.t('engine.unknownWord');
     else if (!s.tutorial && !matchesLevel(entry.level, s.settings.level))
-      error = 'คำนี้ไม่อยู่ในชุดระดับที่เลือก';
+      error = this.t('engine.levelMismatch');
     if (error) {
       s.error = error;
       this.sound('wrong');
@@ -489,14 +499,14 @@ export class GameEngine {
     if (s.tutorial) return 'CAT';
     const entry = this.dictionary.hint(s.inventory, s.tutorial ? 'all' : s.settings.level);
     if (!entry) {
-      s.error = 'ยังเรียงคำในชุดนี้ไม่ได้ เก็บอักษรเพิ่มในรอบถัดไป';
+      s.error = this.t('engine.noHint');
       this.publish();
     }
     return entry?.word ?? '';
   }
   leaveChallenge() {
     if (this.state.phase !== 'challenge' || this.state.tutorial) return;
-    this.state.notice = 'เก็บตัวอักษรเพิ่ม แล้วกลับเข้าประตูรอบถัดไปได้';
+    this.state.notice = this.t('engine.leavePortal');
     this.beginCountdown();
     this.publish();
   }
@@ -512,7 +522,10 @@ export class GameEngine {
     const s = this.state;
     if (s.phase !== 'chest' || !s.reward?.opened || !s.reward.revealed) return false;
     s.inventory.push(...s.reward.letters);
-    s.notice = CHESTS[s.reward.kind].title + ' เพิ่ม ' + s.reward.letters.length + ' ตัวอักษร';
+    s.notice = this.t('engine.lootAdded', {
+      chest: this.t(CHESTS[s.reward.kind].title),
+      count: s.reward.letters.length,
+    });
     s.reward = null;
     if (s.tutorial) {
       this.finishPractice();
@@ -529,7 +542,7 @@ export class GameEngine {
     this.sound('death');
     if (s.tutorial) {
       this.prepareLessonField();
-      s.notice = 'ลองบทเดิมอีกครั้งได้เลย ชนขอบหรือตัวเองในโหมดฝึกไม่เสียหัวใจ';
+      s.notice = this.t('engine.practiceRetry');
       this.lessonReturn = null;
       s.phase = 'lesson';
       this.publish();
@@ -552,7 +565,7 @@ export class GameEngine {
     if (s.phase !== 'revive' || s.hearts <= 0 || s.reviveRemaining <= 0 || !s.reviveWord)
       return false;
     if (normalizeWord(input) !== s.reviveWord.word) {
-      s.error = 'ยังไม่ถูก ลองสะกดอีกครั้งได้เลย';
+      s.error = this.t('engine.reviveWrong');
       this.sound('wrong');
       this.publish();
       return false;
@@ -570,7 +583,7 @@ export class GameEngine {
     this.fillLetters();
     s.reviveWord = null;
     s.error = '';
-    s.notice = 'กลับมาแล้ว! หัก 100 คะแนน และใช้หัวใจ 1 ดวง';
+    s.notice = this.t('engine.revived');
     this.sound('revive');
     this.beginCountdown();
     this.publish();

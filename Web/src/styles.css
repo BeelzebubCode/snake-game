@@ -2960,3 +2960,25 @@ kbd {
     padding: 3px 5px;
   }
 }
+
+#word-input-help {
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+.input-feedback {
+  min-height: 1.8em;
+  margin: 7px 0 12px;
+  color: #ffbb7a;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.word-input[aria-invalid='true'] {
+  border-color: #ffc477;
+}
+html[lang='en'] .hero-copy h1 {
+  letter-spacing: -2px;
+}
+html[lang='en'] .tutorial-review button {
+  max-width: 350px;
+}

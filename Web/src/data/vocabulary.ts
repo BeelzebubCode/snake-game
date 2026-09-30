@@ -92,15 +92,19 @@ export const REVIVAL_WORDS = STARTER_WORDS.filter(
   (entry) => entry.word.length >= 3 && entry.word.length <= 5,
 );
 export const normalizeWord = (text: string) => text.trim().toUpperCase();
-export function canBuild(word: string, letters: string[]): boolean {
+export function missingLetters(word: string, letters: string[]): string[] {
   const counts = new Map<string, number>();
   letters.forEach((letter) => counts.set(letter, (counts.get(letter) ?? 0) + 1));
+  const missing: string[] = [];
   for (const letter of word) {
     const count = counts.get(letter) ?? 0;
-    if (!count) return false;
-    counts.set(letter, count - 1);
+    if (!count) missing.push(letter);
+    else counts.set(letter, count - 1);
   }
-  return true;
+  return missing;
+}
+export function canBuild(word: string, letters: string[]): boolean {
+  return missingLetters(word, letters).length === 0;
 }
 export function scoreWord(entry: Word): number {
   const perLetter: Record<Level, number> = { A1: 100, A2: 150, B1: 200, B2: 300, C1: 450, C2: 600 };

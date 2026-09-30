@@ -31,6 +31,7 @@ describe('versioned local save', () => {
     const save = freshSave();
     save.settings.portalSeconds = 120;
     save.settings.speed = 'fast';
+    save.settings.language = 'th';
     expect(writeSave(save)).toBe(true);
     expect(loadSave().settings).toEqual(save.settings);
     vi.stubGlobal('localStorage', {
@@ -43,6 +44,20 @@ describe('versioned local save', () => {
     });
     expect(writeSave(save)).toBe(false);
     expect(loadSave()).toEqual(freshSave());
+  });
+  it('uses English for new saves and invalid languages while preserving progress', () => {
+    expect(freshSave().settings.language).toBe('en');
+    localStorage.setItem(
+      'lexisnake:v2',
+      JSON.stringify({ version: 2, settings: { language: 'unknown' }, bestScore: 7200, played: 9 }),
+    );
+    const save = loadSave();
+    expect(save.settings.language).toBe('en');
+    expect(save.bestScore).toBe(7200);
+    expect(save.played).toBe(9);
+    save.settings.language = 'th';
+    writeSave(save);
+    expect(loadSave().settings.language).toBe('th');
   });
   it('records scores and unique learned words while keeping tutorial stats separate', () => {
     const e = new GameEngine();
@@ -74,6 +89,7 @@ describe('versioned local save', () => {
     );
     const save = loadSave();
     expect(save.settings).toMatchObject({
+      language: 'en',
       skin: 'mint',
       snakeStyle: 'smooth',
       showGrid: true,
