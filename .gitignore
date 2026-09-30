@@ -20,3 +20,6 @@ dist/
 .coverage
 htmlcov/
 coverage.xml
+
+# Local Python files preserved during the switch to the web app
+/.legacy-local/

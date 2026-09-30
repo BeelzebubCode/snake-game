@@ -42,7 +42,9 @@ Vercel รัน npm run verify ก่อนเผยแพร่ทุกคร
 
 ## โครงสร้างรุ่นเก่า
 
-Python อยู่ที่ root เพื่ออ้างอิงและใช้งานรุ่นเดิม Workflow แจกไฟล์ native ใช้เฉพาะ tag v1.* เวอร์ชันเว็บเผยแพร่ผ่าน Git โดยไม่ต้องสร้าง release tag
+main เหลือโค้ดเกมเว็บและ workflow Web CI ซอร์ส Python พร้อม workflow แจกไฟล์ native เก็บอยู่ใน tag `python-v1-archive` เวอร์ชันเว็บเผยแพร่ผ่าน Git โดยไม่ต้องสร้าง release tag
+
+พจนานุกรมต้นทางอยู่ใน `Web/data-source/` และสร้างข้อมูลเว็บซ้ำได้ด้วย `npm run data:build` จึงไม่ต้องใช้ไฟล์ Python หรือ data/ ที่ root
 
 ## เอกสารผู้ให้บริการ
 

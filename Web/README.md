@@ -2,7 +2,7 @@
 
 [เล่นออนไลน์](https://lexisnake.vercel.app) · [GitHub Actions](https://github.com/BeelzebubCode/snake-game/actions/workflows/web-ci.yml)
 
-เกมเว็บ React + TypeScript + Phaser + Vite ที่เล่นได้จริง พัฒนาแยกจาก Python ในโฟลเดอร์ Web/
+เกมเว็บ React + TypeScript + Phaser + Vite ที่เล่นได้จริง ซอร์สแอปทั้งหมดอยู่ในโฟลเดอร์ Web/
 
 ## เปิดเล่นในเครื่อง
 
@@ -89,6 +89,6 @@ Browser tests ใช้ Chrome ที่ติดตั้งในเครื�
 
 GitHub Actions ตรวจเว็บอัตโนมัติ และ Vercel เชื่อม repository โดยใช้ main เป็น production branch อ่านรายละเอียดใน [DEPLOYMENT.md](DEPLOYMENT.md)
 
-Python อยู่ที่ root และ workflow แจกไฟล์ native ใช้เฉพาะ tag v1.*
+นำไฟล์ Python ออกจาก main แล้ว ซอร์สและ workflow เดิมอยู่ที่ [python-v1-archive](https://github.com/BeelzebubCode/snake-game/tree/python-v1-archive) ข้อมูลที่เว็บใช้ทั้งหมดอยู่ใน Web/ ดู [บันทึกการจัดไฟล์](PYTHON_CLEANUP.md)
 
 [design-preview.html](design-preview.html) เป็นภาพต้นแบบก่อนพัฒนา เก็บไว้ดูแนวคิดเดิม ให้ใช้ npm run dev เพื่อเปิดเกมเวอร์ชันปัจจุบัน
