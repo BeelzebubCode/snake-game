@@ -12,11 +12,16 @@ interface CustomSelectProps<T extends string | number> {
   className?: string;
 }
 
-export function CustomSelect<T extends string | number>({ value, onChange, options, className = '' }: CustomSelectProps<T>) {
+export function CustomSelect<T extends string | number>({
+  value,
+  onChange,
+  options,
+  className = '',
+}: CustomSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedOption = options.find((o) => o.value === value) || options[0];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -30,10 +35,7 @@ export function CustomSelect<T extends string | number>({ value, onChange, optio
 
   return (
     <div className={`custom-select ${className}`} ref={containerRef}>
-      <div 
-        className={`custom-select-trigger ${open ? 'open' : ''}`}
-        onClick={() => setOpen(!open)}
-      >
+      <div className={`custom-select-trigger ${open ? 'open' : ''}`} onClick={() => setOpen(!open)}>
         <span>{selectedOption?.label}</span>
       </div>
       {open && (

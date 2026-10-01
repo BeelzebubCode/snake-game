@@ -149,7 +149,9 @@ export default function SettingsPanel({
                     {t('settings.snakeStyle')}
                     <CustomSelect
                       value={draft.snakeStyle}
-                      onChange={(val) => setDraft({ ...draft, snakeStyle: val as Settings['snakeStyle'] })}
+                      onChange={(val) =>
+                        setDraft({ ...draft, snakeStyle: val as Settings['snakeStyle'] })
+                      }
                       options={[
                         { value: 'smooth', label: t('settings.smooth') },
                         { value: 'classic', label: t('settings.classic') },
@@ -185,8 +187,8 @@ export default function SettingsPanel({
                         { value: 'random', label: t('settings.randomMap') },
                         ...MAPS.map((map) => ({
                           value: map.id,
-                          label: `${map.name} · ${t(map.description)}`
-                        }))
+                          label: `${map.name} · ${t(map.description)}`,
+                        })),
                       ]}
                     />
                   </label>
@@ -243,7 +245,9 @@ export default function SettingsPanel({
                     {t('settings.language')}
                     <CustomSelect
                       value={draft.language}
-                      onChange={(val) => setDraft({ ...draft, language: val as Settings['language'] })}
+                      onChange={(val) =>
+                        setDraft({ ...draft, language: val as Settings['language'] })
+                      }
                       options={[
                         { value: 'en', label: 'English' },
                         { value: 'th', label: 'ไทย (Thai)' },
@@ -293,7 +297,10 @@ export default function SettingsPanel({
                         { value: 'easy', label: t('settings.easy') },
                         { value: 'medium', label: t('settings.medium') },
                         { value: 'hard', label: t('settings.hard') },
-                        ...['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(level => ({ value: level, label: level }))
+                        ...['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map((level) => ({
+                          value: level,
+                          label: level,
+                        })),
                       ]}
                     />
                     <small>{t('settings.levelNote')}</small>

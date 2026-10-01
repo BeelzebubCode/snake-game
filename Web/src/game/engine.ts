@@ -71,15 +71,12 @@ export class GameEngine {
   private gateThreshold = 0;
   // Tracks recent letters placed on the map to drive anti-repeat logic.
   private letterHistory: string[] = [];
-  
+
   private static readonly VOWELS = 'AEIOU';
   private static readonly POOL_EASY = 'AAAAEEEEEIIIOOOUU' + 'TTTNNNSSSRRR';
   private static readonly POOL_MID = 'AAAAEEEEEIIIOOOUU' + 'TTTNNNSSSRRR' + 'HHLLDDCCMM';
-  private static readonly POOL_FULL = 
-    'AAAAEEEEEEIIIIOOOOUUU' + 
-    'TTTTNNNNSSSSRRRR' + 
-    'HHLLDDCCMMPPBBFFGGYY' + 
-    'JKVW' + 'QXZ';
+  private static readonly POOL_FULL =
+    'AAAAEEEEEEIIIIOOOOUUU' + 'TTTTNNNNSSSSRRRR' + 'HHLLDDCCMMPPBBFFGGYY' + 'JKVW' + 'QXZ';
 
   private pickFrom(pool: string): string {
     return pool[Math.floor(this.random() * pool.length)];
@@ -240,7 +237,9 @@ export class GameEngine {
         this.step();
       }
       if (s.spawnPortal) {
-        const stackedCount = s.snake.filter((p) => p.x === s.spawnPortal!.x && p.y === s.spawnPortal!.y).length;
+        const stackedCount = s.snake.filter(
+          (p) => p.x === s.spawnPortal!.x && p.y === s.spawnPortal!.y,
+        ).length;
         if (stackedCount === 0) s.spawnPortal = null;
       }
     } else if (s.phase === 'warp') {
@@ -315,30 +314,35 @@ export class GameEngine {
     const { score, letters, inventory } = this.state;
     const V = GameEngine.VOWELS;
 
-    const onMap = letters.map(l => l.letter);
-    const hasVowel = onMap.some(l => V.includes(l)) || inventory.some(l => V.includes(l));
-    
+    const onMap = letters.map((l) => l.letter);
+    const hasVowel = onMap.some((l) => V.includes(l)) || inventory.some((l) => V.includes(l));
+
     // 100% Vowel Guarantee
     if (!hasVowel) {
       return V[Math.floor(this.random() * V.length)];
     }
 
-    const pool = score < 500 ? GameEngine.POOL_EASY : score < 1500 ? GameEngine.POOL_MID : GameEngine.POOL_FULL;
+    const pool =
+      score < 500
+        ? GameEngine.POOL_EASY
+        : score < 1500
+          ? GameEngine.POOL_MID
+          : GameEngine.POOL_FULL;
 
     let letter = this.pickFrom(pool);
-    
+
     // Anti-repeat
     for (let i = 0; i < 3; i++) {
       let isRepeat = this.letterHistory.includes(letter) || onMap.includes(letter);
       if (letter === 'Q' && !onMap.includes('U') && !inventory.includes('U')) isRepeat = true;
-      
+
       if (isRepeat) {
         letter = this.pickFrom(pool);
       } else {
         break;
       }
     }
-    
+
     this.letterHistory = [...this.letterHistory.slice(-9), letter];
     return letter;
   }
@@ -729,12 +733,12 @@ export class GameEngine {
   swapChestLetter(rewardIndex: number, inventoryIndex: number) {
     const s = this.state;
     if (s.phase !== 'chest' || !s.reward?.revealed) return;
-    
+
     // Swap the letters
     const temp = s.reward.letters[rewardIndex];
     s.reward.letters[rewardIndex] = s.inventory[inventoryIndex];
     s.inventory[inventoryIndex] = temp;
-    
+
     this.publish();
   }
 

@@ -324,7 +324,11 @@ function GameScreen({
           </button>
           <span
             className="map-badge"
-            title={s.settings.map === 'auto' || s.settings.map === 'random' ? t('game.mapProgress') : t('game.selectedMap')}
+            title={
+              s.settings.map === 'auto' || s.settings.map === 'random'
+                ? t('game.mapProgress')
+                : t('game.selectedMap')
+            }
           >
             {currentMap.name}
           </span>
@@ -600,9 +604,7 @@ function GameScreen({
               maxLength={24}
               readOnly={s.inventory.length === 0}
               placeholder={
-                s.inventory.length === 0
-                  ? t('portal.emptyPlaceholder')
-                  : t('portal.placeholder')
+                s.inventory.length === 0 ? t('portal.emptyPlaceholder') : t('portal.placeholder')
               }
               aria-describedby="word-input-help word-input-feedback"
               aria-invalid={Boolean(wordFeedback)}
@@ -785,7 +787,7 @@ function GameScreen({
                 return (
                   <button
                     className={
-                      'letter-tile ' + 
+                      'letter-tile ' +
                       (s.reward!.revealed ? 'reward-reveal' : 'shuffling') +
                       (isSelected ? ' selected' : '') +
                       (isDiscarded ? ' discarded' : '')
@@ -801,7 +803,9 @@ function GameScreen({
                   >
                     {s.reward!.revealed
                       ? letter
-                      : String.fromCharCode(65 + ((Math.floor(s.reward!.elapsed / 80) + i * 7) % 26))}
+                      : String.fromCharCode(
+                          65 + ((Math.floor(s.reward!.elapsed / 80) + i * 7) % 26),
+                        )}
                     {isDiscarded && <span className="discard-badge">×</span>}
                   </button>
                 );
@@ -810,9 +814,7 @@ function GameScreen({
           )}
           {s.reward.revealed && s.inventory.length + s.reward.letters.length > MAX_LETTERS && (
             <div className="chest-swap-area">
-              <p className="swap-hint">
-                {t('chest.swapHint')}
-              </p>
+              <p className="swap-hint">{t('chest.swapHint')}</p>
               <div className="swap-inventory-list">
                 {s.inventory.map((letter, i) => (
                   <button

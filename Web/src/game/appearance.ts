@@ -88,7 +88,7 @@ export function mapFor(stage: number, choice: MapChoice = 'auto') {
   }
   const s = Number.isFinite(stage) ? Math.max(0, Math.floor(stage)) : 0;
   if (choice === 'auto') return MAPS[s % MAPS.length];
-  
+
   let currentIdx = 0;
   for (let i = 1; i <= s; i++) {
     const hash = (i * 2654435761) >>> 0;
