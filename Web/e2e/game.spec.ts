@@ -260,7 +260,11 @@ test('appearance settings persist and reach the game renderer', async ({ page })
   await selectCustom(page, 'รูปแบบตัวงู', 'คลาสสิก');
   await page.getByRole('tab', { name: 'แมพและสนาม', exact: true }).click();
   await selectCustom(page, 'แมพพื้นหลัง', 'Midnight Ocean');
-  await page.locator('label').filter({ hasText: 'แสดงเส้นตาราง' }).locator('input[type="checkbox"]').uncheck();
+  await page
+    .locator('label')
+    .filter({ hasText: 'แสดงเส้นตาราง' })
+    .locator('input[type="checkbox"]')
+    .uncheck();
   await page.getByRole('button', { name: 'บันทึกการตั้งค่า' }).click();
   await page.reload();
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
