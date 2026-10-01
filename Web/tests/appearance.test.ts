@@ -145,8 +145,8 @@ describe('maps and original options', () => {
     expect(e.state.mapStage).toBe(1);
     expect(mapFor(e.state.mapStage, 'auto').id).toBe('forest');
   });
-  it('cycles four maps and respects a fixed-map choice', () => {
-    for (let i = 0; i < 8; i++) expect(mapFor(i).id).toBe(MAPS[i % 4].id);
+  it('cycles all maps and respects a fixed-map choice', () => {
+    for (let i = 0; i < 8; i++) expect(mapFor(i).id).toBe(MAPS[i % MAPS.length].id);
     expect(mapFor(3, 'midnight').id).toBe('midnight');
     expect(mapFor(0, 'volcano').id).toBe('volcano');
     expect(mapFor(NaN).id).toBe('midnight');
