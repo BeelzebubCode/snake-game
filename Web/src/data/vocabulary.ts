@@ -122,9 +122,12 @@ export class Vocabulary {
   find(word: string) {
     return this.entries.get(normalizeWord(word));
   }
-  hint(letters: string[], level: VocabularyFilter): Word | undefined {
+  hint(letters: string[], level: VocabularyFilter, exclude: string[] = []): Word | undefined {
     return [...this.entries.values()].find(
-      (entry) => matchesLevel(entry.level, level) && canBuild(entry.word, letters),
+      (entry) =>
+        matchesLevel(entry.level, level) &&
+        canBuild(entry.word, letters) &&
+        !exclude.includes(entry.word),
     );
   }
   add(entries: Word[]) {

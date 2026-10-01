@@ -713,7 +713,8 @@ export class GameEngine {
     const s = this.state;
     if (s.phase !== 'challenge') return '';
     if (s.tutorial) return 'CAT';
-    const entry = this.dictionary.hint(s.inventory, s.tutorial ? 'all' : s.settings.level);
+    const exclude = s.words.map((w) => w.entry.word);
+    const entry = this.dictionary.hint(s.inventory, s.tutorial ? 'all' : s.settings.level, exclude);
     if (!entry) {
       s.error = this.t('engine.noHint');
       this.publish();
