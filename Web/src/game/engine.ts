@@ -102,7 +102,7 @@ export class GameEngine {
       mapStage: 0,
       letters: [],
       chest: null,
-      portal: null,
+      portals: [],
       obstacles: [],
       inventory: [],
       score: 0,
@@ -223,9 +223,9 @@ export class GameEngine {
         s.letters = s.letters.filter((letter) => letter.expiresAt > s.elapsed);
         this.fillLetters();
         if (s.chest && s.chest.expiresAt <= s.elapsed) s.chest = null;
-        if (s.portal && s.portal.expiresAt <= s.elapsed) s.portal = null;
+        s.portals = s.portals.filter((p) => p.expiresAt > s.elapsed);
         if (!s.chest && s.elapsed >= s.nextChestAt) this.spawnChest();
-        if (!s.portal && s.elapsed >= s.nextPortalAt) this.spawnPortal();
+        if (s.portals.length === 0 && s.elapsed >= s.nextPortalAt) this.spawnPortal();
         s.obstacles = s.obstacles.filter((brick) => brick.expiresAt > s.elapsed);
         this.fillObstacles();
         if (s.toast && s.elapsed >= s.toastUntil) s.toast = '';
@@ -298,9 +298,10 @@ export class GameEngine {
       ...(s.chest ? [s.chest] : []),
       ...exclude,
     ];
-    if (s.portal)
+    for (const p of s.portals) {
       for (let x = 0; x < 2; x++)
-        for (let y = 0; y < 2; y++) occupied.push({ x: s.portal.x + x, y: s.portal.y + y });
+        for (let y = 0; y < 2; y++) occupied.push({ x: p.x + x, y: p.y + y });
+    }
     const taken = new Set(occupied.map((p) => p.y * COLS + p.x));
     const available: Cell[] = [];
     for (let y = 1; y < ROWS - 1; y++)
@@ -397,7 +398,7 @@ export class GameEngine {
     this.state.chest = { ...cell, id: ++this.id, kind, expiresAt: this.state.elapsed + 30_000 };
     this.state.nextChestAt = this.state.elapsed + 20_000;
   }
-  private spawnPortal() {
+  private spawnPortal(duration = 60_000, nextDelay = 30_000) {
     const s = this.state,
       base = this.freeCell();
     if (!base) return;
@@ -413,41 +414,39 @@ export class GameEngine {
       ];
       if (
         !cells.some((cell) =>
-          [...s.snake, ...s.letters, ...s.obstacles, ...(s.chest ? [s.chest] : [])].some((p) =>
+          [...s.snake, ...s.letters, ...s.obstacles, ...(s.chest ? [s.chest] : []), ...s.portals].some((p) =>
             same(p, cell),
           ),
         )
       ) {
-        s.portal = { x, y, expiresAt: s.elapsed + 60_000 };
-        s.nextPortalAt = s.elapsed + 30_000;
+        s.portals.push({ x, y, expiresAt: s.elapsed + duration });
+        s.nextPortalAt = s.elapsed + nextDelay;
         this.sound('portal');
         return;
       }
     }
   }
-  // An inventory holding 20-25 letters (random per fill) with no gate on the board pulls the player into
-  // one automatically. It re-arms once the inventory drains below 20.
+  
+  private bonusPortalSpawned = false;
   private checkFullBag() {
     const s = this.state,
       count = s.inventory.length;
-    if (count < FORCED_GATE_MIN) {
-      this.gateArmed = true;
-      this.gateThreshold = 0;
+    if (s.tutorial || count < MAX_LETTERS) {
+      this.bonusPortalSpawned = false;
       return;
     }
-    if (!this.gateArmed) return;
-    this.gateThreshold ||= FORCED_GATE_MIN + Math.floor(this.random() * FORCED_GATE_SPREAD);
-    if (count < this.gateThreshold) return;
-    this.gateArmed = false;
-    this.gateThreshold = 0;
-    if (!s.portal) this.beginWarp(true);
+    if (!this.bonusPortalSpawned && s.portals.length < 2) {
+      this.bonusPortalSpawned = true;
+      if (s.portals.length === 0) this.spawnPortal(60_000);
+      this.spawnPortal(90_000, 30_000); // 1.30 min portal
+    }
   }
   private beginWarp(forced: boolean) {
     const s = this.state;
     s.phase = 'warp';
     s.warpRemaining = s.settings.reducedMotion ? 600 : WARP_TIME;
     s.forced = forced;
-    s.portal = null;
+    s.portals = [];
     s.nextPortalAt = s.elapsed + 30_000;
     s.error = '';
     s.toast = '';
@@ -557,20 +556,21 @@ export class GameEngine {
       this.publish();
       return;
     }
-    if (
-      s.portal &&
-      head.x >= s.portal.x &&
-      head.x < s.portal.x + 2 &&
-      head.y >= s.portal.y &&
-      head.y < s.portal.y + 2
-    ) {
+    const enteredPortal = s.portals.find(
+      (p) =>
+        head.x >= p.x &&
+        head.x < p.x + 2 &&
+        head.y >= p.y &&
+        head.y < p.y + 2
+    );
+    if (enteredPortal) {
       if (!s.tutorial) {
         this.beginWarp(false);
         return;
       }
       s.phase = 'challenge';
       s.challengeRemaining = s.settings.portalSeconds * 1000;
-      s.portal = null;
+      s.portals = [];
       s.nextPortalAt = s.elapsed + 30_000;
       s.error = '';
       this.queued = [];
@@ -606,7 +606,7 @@ export class GameEngine {
     s.notice = '';
     s.letters = [];
     s.chest = null;
-    s.portal = null;
+    s.portals = [];
     s.obstacles = [];
     s.previousSnake = s.snake.map((p) => ({ ...p }));
     this.queued = [];
@@ -625,7 +625,7 @@ export class GameEngine {
     s.nextDirection = 'right';
     s.letters = [];
     s.chest = null;
-    s.portal = null;
+    s.portals = [];
     // Practice objects are scripted and stay until collected, even after a retry.
     if (s.lesson === 2)
       s.letters = [
@@ -633,7 +633,7 @@ export class GameEngine {
       ];
     if (s.lesson === 3)
       s.chest = { id: ++this.id, kind: 'silver', x: 18, y: 11, expiresAt: Number.MAX_SAFE_INTEGER };
-    if (s.lesson === 4) s.portal = { x: 12, y: 10, expiresAt: Number.MAX_SAFE_INTEGER };
+    if (s.lesson === 4) s.portals = [{ x: 12, y: 10, expiresAt: Number.MAX_SAFE_INTEGER }];
     s.obstacles = [];
     if (s.lesson === 6) {
       s.obstacles = [{ id: ++this.id, x: 18, y: 11, expiresAt: Number.MAX_SAFE_INTEGER }];
@@ -813,7 +813,7 @@ export class GameEngine {
     s.letters = s.letters.filter((p) => !s.snake.some((q) => same(p, q)));
     s.obstacles = s.obstacles.filter((p) => !s.snake.some((q) => same(p, q)));
     s.chest = null;
-    s.portal = null;
+    s.portals = [];
     s.nextPortalAt = s.elapsed + 10_000;
     s.nextChestAt = s.elapsed + 12_000;
     const lost = this.dropLetters(REVIVE_LETTER_LOSS);

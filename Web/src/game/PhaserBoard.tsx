@@ -408,7 +408,7 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
           create() {
             this.drawFloor();
             this.ink = this.add.graphics();
-            for (let i = 0; i < 6; i++)
+            for (let i = 0; i < 8; i++)
               this.labels.push(
                 this.add
                   .text(0, 0, '', {
@@ -463,9 +463,9 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
               reduced = s.settings.reducedMotion || s.phase !== 'playing';
             const pulse = reduced ? 0 : Math.sin(time / 700) * 2;
             this.game.canvas.dataset.skin = s.settings.skin;
-            if (s.portal) {
-              const x = (s.portal.x + 1) * CELL,
-                y = (s.portal.y + 1) * CELL;
+            s.portals.forEach((portal, idx) => {
+              const x = (portal.x + 1) * CELL,
+                y = (portal.y + 1) * CELL;
               g.fillStyle(0x2ecc71, 0.1);
               g.fillCircle(x, y, 44 + pulse);
               g.lineStyle(2, 0x2ecc71, 0.7);
@@ -479,17 +479,20 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
               g.fillStyle(0xb1ffe5);
               g.fillCircle(x + 5, y - 4, 3);
               g.fillCircle(x - 8, y + 12, 2);
-              this.labels[5]
-                .setPosition(x, y + 43)
-                .setText(
-                  s.tutorial
-                    ? t('board.practice')
-                    : Math.max(0, Math.ceil((s.portal.expiresAt - s.elapsed) / 1000)) + 's',
-                )
-                .setColor('#b9ffde')
-                .setFontSize(12)
-                .setVisible(true);
-            }
+              
+              if (5 + idx < this.labels.length) {
+                this.labels[5 + idx]
+                  .setPosition(x, y + 43)
+                  .setText(
+                    s.tutorial
+                      ? t('board.practice')
+                      : Math.max(0, Math.ceil((portal.expiresAt - s.elapsed) / 1000)) + 's',
+                  )
+                  .setColor('#b9ffde')
+                  .setFontSize(12)
+                  .setVisible(true);
+              }
+            });
             if (s.spawnPortal) {
               const x = (s.spawnPortal.x + 0.5) * CELL,
                 y = (s.spawnPortal.y + 0.5) * CELL;

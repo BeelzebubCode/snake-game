@@ -89,7 +89,7 @@ export interface GameState {
   mapStage: number;
   letters: Letter[];
   chest: Chest | null;
-  portal: Portal | null;
+  portals: Portal[];
   obstacles: Obstacle[];
   inventory: string[];
   score: number;

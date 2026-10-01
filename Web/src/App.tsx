@@ -351,14 +351,14 @@ function GameScreen({
           </div>
         </div>
         <div className="game-actions">
-          <span className="portal-clock" style={{ color: '#72f0b9' }} title="Snake Length">
-            🐍 {s.snake.length}
+          <span className="portal-clock" style={{ color: '#72f0b9', display: 'flex', alignItems: 'center', gap: '6px' }} title="Snake Length">
+            <div style={{ width: '18px', height: '18px' }}><SnakeMark /></div> {s.snake.length}
           </span>
           <span className="portal-clock">
             <i />{' '}
             {s.tutorial
               ? t('game.practiceStatus')
-              : s.portal
+              : s.portals.length > 0
                 ? t('game.portalOpen')
                 : t('game.portalCountdown', { seconds: clock(s.nextPortalAt - s.elapsed) })}
           </span>
@@ -784,13 +784,15 @@ function GameScreen({
                 const room = Math.max(0, MAX_LETTERS - s.inventory.length);
                 const isDiscarded = s.reward!.revealed && i >= room;
                 const isSelected = chestSwapSource === i;
+                const needsSwapSource = isDiscarded && chestSwapSource === null;
                 return (
                   <button
                     className={
                       'letter-tile ' +
                       (s.reward!.revealed ? 'reward-reveal' : 'shuffling') +
                       (isSelected ? ' selected' : '') +
-                      (isDiscarded ? ' discarded' : '')
+                      (isDiscarded ? ' discarded' : '') +
+                      (needsSwapSource ? ' pulse-glow' : '')
                     }
                     style={{ '--delay': i * 90 + 'ms' } as CSSProperties}
                     key={i}
@@ -819,7 +821,7 @@ function GameScreen({
                 {s.inventory.map((letter, i) => (
                   <button
                     key={i}
-                    className="letter-tile swap-target"
+                    className={`letter-tile swap-target ${chestSwapSource !== null ? 'pulse-glow' : ''}`}
                     onClick={() => {
                       if (chestSwapSource !== null) {
                         engine.swapChestLetter(chestSwapSource, i);

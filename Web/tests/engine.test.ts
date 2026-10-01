@@ -139,7 +139,7 @@ describe('portals and word construction', () => {
     for (const duration of [30, 60, 90, 120]) {
       const e = new GameEngine({ ...DEFAULT_SETTINGS, portalSeconds: duration });
       playing(e);
-      e.state.portal = { x: 9, y: 11, expiresAt: 60000 };
+      e.state.portals = [{ x: 9, y: 11, expiresAt: 60000 }];
       advance(e, 200);
       expect(e.state.phase).toBe('warp');
       advance(e, WARP_TIME);
@@ -214,51 +214,44 @@ describe('portals and word construction', () => {
     expect(e.state.inventory).toEqual(['C', 'A', 'T']);
     expect(e.state.error).not.toBe('');
   });
-  it('pulls the player into a gate once the bag holds 20 to 25 letters and no gate is open', () => {
+  it('spawns a bonus portal when the bag is full', () => {
     const e = make();
     playing(e);
     e.state.nextPortalAt = Number.MAX_SAFE_INTEGER;
-    e.state.inventory = Array.from({ length: 19 }, () => 'A');
+    e.state.inventory = Array.from({ length: 29 }, () => 'A');
     advance(e, 100);
-    expect(e.state.phase).toBe('playing');
-    e.state.inventory.push('A', 'A', 'A', 'A', 'A', 'A');
+    expect(e.state.portals).toHaveLength(0);
+    e.state.inventory.push('A');
     advance(e, 100);
-    expect(e.state.phase).toBe('warp');
-    expect(e.state.forced).toBe(true);
-    advance(e, WARP_TIME + 100);
-    expect(e.state.phase).toBe('challenge');
-    // A forced entry cannot be skipped.
-    e.leaveChallenge();
-    expect(e.state.phase).toBe('challenge');
+    expect(e.state.portals).toHaveLength(2);
   });
-  it('re-arms the forced gate only after the bag drains below 20', () => {
+  it('re-arms the bonus portal after the bag drains below maximum', () => {
     const e = make();
     e.state.nextPortalAt = Number.MAX_SAFE_INTEGER;
-    e.state.inventory = Array.from({ length: 25 }, () => 'A');
+    e.state.inventory = Array.from({ length: 30 }, () => 'A');
     playing(e);
     advance(e, 100);
-    expect(e.state.phase).toBe('warp');
-    advance(e, WARP_TIME + 100);
-    e.state.phase = 'playing';
+    expect(e.state.portals).toHaveLength(2);
+    e.state.portals = [];
     advance(e, 100);
-    expect(e.state.phase).toBe('playing');
+    expect(e.state.portals).toHaveLength(0);
     e.state.inventory = ['A'];
     advance(e, 100);
-    e.state.inventory = Array.from({ length: 25 }, () => 'A');
+    e.state.inventory = Array.from({ length: 30 }, () => 'A');
     advance(e, 100);
-    expect(e.state.phase).toBe('warp');
+    expect(e.state.portals).toHaveLength(2);
   });
-  it('leaves an open gate alone instead of forcing entry', () => {
+  it('spawns only the bonus portal if a gate is already open', () => {
     const e = make();
     playing(e);
-    e.state.portal = { x: 30, y: 3, expiresAt: 60_000 };
-    e.state.inventory = Array.from({ length: 25 }, () => 'A');
+    e.state.portals = [{ x: 30, y: 3, expiresAt: 60_000 }];
+    e.state.inventory = Array.from({ length: 30 }, () => 'A');
     advance(e, 100);
-    expect(e.state.phase).toBe('playing');
+    expect(e.state.portals).toHaveLength(2);
   });
   it('freezes the world during the warp and lets the player leave a normal gate entry', () => {
     const e = playing(make());
-    e.state.portal = { x: 9, y: 11, expiresAt: 60000 };
+    e.state.portals = [{ x: 9, y: 11, expiresAt: 60000 }];
     advance(e, 200);
     expect(e.state.phase).toBe('warp');
     const elapsed = e.state.elapsed;
@@ -549,7 +542,7 @@ describe('beginner tutorial', () => {
     e.continueLesson();
     expect(e.state.lesson).toBe(4);
     e.startLesson();
-    expect(e.state.portal).not.toBeNull();
+    expect(e.state.portals.length).toBeGreaterThan(0);
     expect(e.state.letters).toEqual([]);
     advance(e, 3800);
     expect(e.state.phase).toBe('lesson');
@@ -618,7 +611,7 @@ describe('beginner tutorial', () => {
       advance(e, 200);
       expect(e.state.letters.map((l) => l.letter)).toEqual(lesson === 2 ? ['C'] : []);
       expect(e.state.chest?.kind ?? null).toBe(lesson === 3 ? 'silver' : null);
-      expect(Boolean(e.state.portal)).toBe(lesson === 4);
+      expect(e.state.portals.length > 0).toBe(lesson === 4);
     }
   });
   it('retries the same objective after collisions, keeping inventory and hearts', () => {
