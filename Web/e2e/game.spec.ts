@@ -1,4 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+// Helper function to interact with CustomSelect component
+async function selectCustom(page: Page, label: string, optionText: string) {
+  const labelLoc = page.locator('label').filter({ hasText: label });
+  await labelLoc.locator('.custom-select-trigger').click();
+  await page.locator('.custom-select-option').filter({ hasText: optionText }).click();
+}
+
+async function expectCustomValue(page: Page, label: string, expectedText: string) {
+  const labelLoc = page.locator('label').filter({ hasText: label });
+  await expect(labelLoc.locator('.custom-select-trigger')).toContainText(expectedText);
+}
+
 // Keep the original full gameplay suite as Thai-language coverage.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -15,13 +28,13 @@ test('Home, settings, returning-player flow, and wide board', async ({ page }) =
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('lexisnake');
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
-  await expect(page.getByLabel('ความเร็วเจ้างู')).toHaveValue('slow');
-  await expect(page.getByLabel('เวลาในประตูมิติต่างโลก')).toHaveValue('60');
-  await page.getByLabel('เวลาในประตูมิติต่างโลก').selectOption('90');
+  await expectCustomValue(page, 'ความเร็วเจ้างู', 'ช้า');
+  await expectCustomValue(page, 'เวลาในประตูมิติต่างโลก', '1 นาที');
+  await selectCustom(page, 'เวลาในประตูมิติต่างโลก', '1 นาที 30 วินาที');
   await page.getByRole('button', { name: 'บันทึกการตั้งค่า' }).click();
   await page.reload();
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
-  await expect(page.getByLabel('เวลาในประตูมิติต่างโลก')).toHaveValue('90');
+  await expectCustomValue(page, 'เวลาในประตูมิติต่างโลก', '1 นาที 30 วินาที');
   await page.getByRole('button', { name: 'ปิด', exact: true }).click();
   await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
   await expect(page.getByRole('heading', { name: 'เคยมาเดินเล่นที่นี่หรือยัง?' })).toBeVisible();
@@ -230,13 +243,13 @@ test('collects a silver chest through movement and claims two letters', async ({
   await page.clock.runFor(5400);
   await expect(page.getByRole('heading', { name: 'ของขวัญของคุณมาแล้ว!' })).toBeVisible();
   await expect(page.locator('.reward-letters .letter-tile')).toHaveCount(2);
-  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(3);
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(0);
   // Reading the reward must keep the world paused and must not claim it early.
   await page.clock.runFor(10000);
   await expect(page.getByRole('heading', { name: 'ของขวัญของคุณมาแล้ว!' })).toBeVisible();
-  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(3);
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(0);
   await page.getByRole('button', { name: 'เก็บใส่กระเป๋า +2' }).click();
-  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(5);
+  await expect(page.locator('.inventory-strip .letter-tile')).toHaveCount(2);
 });
 
 test('appearance settings persist and reach the game renderer', async ({ page }) => {
@@ -244,10 +257,10 @@ test('appearance settings persist and reach the game renderer', async ({ page })
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
   await page.getByRole('tab', { name: 'ตัวงู', exact: true }).click();
   await page.getByRole('button', { name: 'Cyber Purple', exact: true }).click();
-  await page.getByLabel('รูปแบบตัวงู').selectOption('classic');
+  await selectCustom(page, 'รูปแบบตัวงู', 'คลาสสิก');
   await page.getByRole('tab', { name: 'แมพและสนาม', exact: true }).click();
-  await page.getByLabel('แมพพื้นหลัง').selectOption('ocean');
-  await page.getByLabel('แสดงเส้นตาราง').uncheck();
+  await selectCustom(page, 'แมพพื้นหลัง', 'Midnight Ocean');
+  await page.locator('label').filter({ hasText: 'แสดงเส้นตาราง' }).locator('input[type="checkbox"]').uncheck();
   await page.getByRole('button', { name: 'บันทึกการตั้งค่า' }).click();
   await page.reload();
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
@@ -279,9 +292,9 @@ test('a portal word unlocks the next map and exit arrows follow accepted steerin
     const original = await response.text();
     let body = original.replace('random = Math.random', 'random = () => 0');
     body = body.replace('score: 0,', 'score: 1050,');
-    body = body.replace('portal: null,', 'portal: { x: 10, y: 11, expiresAt: 60000 },');
+    body = body.replace('portals: [],', 'portals: [{ x: 10, y: 11, expiresAt: 60000 }],');
     expect(body).toContain('score: 1050,');
-    expect(body).toContain('portal: { x: 10, y: 11, expiresAt: 60000 },');
+    expect(body).toContain('portals: [{ x: 10, y: 11, expiresAt: 60000 }],');
     await route.fulfill({ response, body });
   });
   await page.goto('/');
@@ -390,11 +403,11 @@ test('settings sidebar keeps drafts across categories and cancels without saving
     'aria-selected',
     'true',
   );
-  await page.getByLabel('ความเร็วเจ้างู').selectOption('fast');
+  await selectCustom(page, 'ความเร็วเจ้างู', 'เร็ว');
   await page.getByRole('tab', { name: 'ตัวงู', exact: true }).click();
   await page.getByRole('button', { name: 'Golden Fire', exact: true }).click();
   await page.getByRole('tab', { name: 'แมพและสนาม', exact: true }).click();
-  await page.getByLabel('แมพพื้นหลัง').selectOption('volcano');
+  await selectCustom(page, 'แมพพื้นหลัง', 'Volcano');
   await page.getByRole('tab', { name: 'เสียงและเอฟเฟกต์', exact: true }).click();
   await page.getByLabel('เสียงเอฟเฟกต์และเสียงอ่าน').uncheck();
   await page.getByRole('tab', { name: 'การเล่น', exact: true }).click();
@@ -414,7 +427,7 @@ test('settings sidebar keeps drafts across categories and cancels without saving
   );
   await page.getByRole('button', { name: 'ยกเลิก', exact: true }).click();
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
-  await expect(page.getByLabel('ความเร็วเจ้างู')).toHaveValue('slow');
+  await expectCustomValue(page, 'ความเร็วเจ้างู', 'ช้า');
   await page.getByRole('tab', { name: 'ตัวงู', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Neon Mint', exact: true })).toHaveAttribute(
     'aria-pressed',
