@@ -30,7 +30,7 @@ import {
   WARP_TIME,
 } from './types';
 import { MAP_SCORE_STEP } from './appearance';
-import type { Cell, ChestKind, Direction, GameState, Phase, Settings } from './types';
+import type { Cell, ChestKind, Direction, GameState, Phase, Portal, Settings } from './types';
 
 const vectors: Record<Direction, Cell> = {
   up: { x: 0, y: -1 },
@@ -445,12 +445,16 @@ export class GameEngine {
       this.spawnPortal(90_000, 30_000); // 1.30 min portal
     }
   }
-  private beginWarp(forced: boolean) {
+  private beginWarp(forced: boolean, enteredPortal?: Portal) {
     const s = this.state;
     s.phase = 'warp';
     s.warpRemaining = s.settings.reducedMotion ? 600 : WARP_TIME;
     s.forced = forced;
-    s.portals = [];
+    if (enteredPortal) {
+      s.portals = s.portals.filter((p) => p !== enteredPortal);
+    } else {
+      s.portals = [];
+    }
     s.nextPortalAt = s.elapsed + 30_000;
     s.error = '';
     s.toast = '';
@@ -565,7 +569,7 @@ export class GameEngine {
     );
     if (enteredPortal) {
       if (!s.tutorial) {
-        this.beginWarp(false);
+        this.beginWarp(false, enteredPortal);
         return;
       }
       s.phase = 'challenge';
