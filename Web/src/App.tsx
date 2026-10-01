@@ -351,11 +351,12 @@ function GameScreen({
           </div>
         </div>
         <div className="game-actions">
-          <span className="portal-clock" style={{ color: '#72f0b9', display: 'flex', alignItems: 'center', gap: '6px' }} title="Snake Length">
-            <div style={{ width: '18px', height: '18px' }}><SnakeMark /></div> {s.snake.length}
+          <span className="portal-clock" style={{ color: '#72f0b9' }} title="Snake Length">
+            <div style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center' }}><SnakeMark /></div>
+            {s.snake.length}
           </span>
           <span className="portal-clock">
-            <i />{' '}
+            <i />
             {s.tutorial
               ? t('game.practiceStatus')
               : s.portals.length > 0

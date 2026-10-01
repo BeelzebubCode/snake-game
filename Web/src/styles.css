@@ -848,18 +848,20 @@ button:disabled:hover {
   color: #dedfd4;
 }
 .portal-clock {
-  font-size: 11px;
-  color: var(--muted);
+  font: 700 16px/1 Chakra, sans-serif;
+  color: #ebf3fa;
   margin-right: 12px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .portal-clock i {
   display: inline-block;
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #b2a0c7;
-  margin-right: 5px;
 }
 .game-actions .icon-button {
   font-size: 20px;
