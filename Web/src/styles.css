@@ -848,7 +848,9 @@ button:disabled:hover {
   color: #dedfd4;
 }
 .portal-clock {
-  font: 700 16px/1 Chakra, sans-serif;
+  font:
+    700 16px/1 Chakra,
+    sans-serif;
   color: #ebf3fa;
   margin-right: 12px;
   white-space: nowrap;
@@ -4325,8 +4327,16 @@ html[lang='en'] .tutorial-review button {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 5px 2px rgba(255, 235, 100, 0.4); transform: scale(1); }
-  50% { box-shadow: 0 0 15px 5px rgba(255, 235, 100, 0.8); transform: scale(1.05); border-color: #ffe466; }
+  0%,
+  100% {
+    box-shadow: 0 0 5px 2px rgba(255, 235, 100, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px 5px rgba(255, 235, 100, 0.8);
+    transform: scale(1.05);
+    border-color: #ffe466;
+  }
 }
 .pulse-glow {
   animation: pulse-glow 1.5s infinite ease-in-out;
@@ -4335,4 +4345,3 @@ html[lang='en'] .tutorial-review button {
 .swap-target.pulse-glow {
   animation: pulse-glow 1.5s infinite ease-in-out;
 }
-

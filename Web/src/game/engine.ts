@@ -414,9 +414,13 @@ export class GameEngine {
       ];
       if (
         !cells.some((cell) =>
-          [...s.snake, ...s.letters, ...s.obstacles, ...(s.chest ? [s.chest] : []), ...s.portals].some((p) =>
-            same(p, cell),
-          ),
+          [
+            ...s.snake,
+            ...s.letters,
+            ...s.obstacles,
+            ...(s.chest ? [s.chest] : []),
+            ...s.portals,
+          ].some((p) => same(p, cell)),
         )
       ) {
         s.portals.push({ x, y, expiresAt: s.elapsed + duration });
@@ -426,7 +430,7 @@ export class GameEngine {
       }
     }
   }
-  
+
   private bonusPortalSpawned = false;
   private checkFullBag() {
     const s = this.state,
@@ -557,11 +561,7 @@ export class GameEngine {
       return;
     }
     const enteredPortal = s.portals.find(
-      (p) =>
-        head.x >= p.x &&
-        head.x < p.x + 2 &&
-        head.y >= p.y &&
-        head.y < p.y + 2
+      (p) => head.x >= p.x && head.x < p.x + 2 && head.y >= p.y && head.y < p.y + 2,
     );
     if (enteredPortal) {
       if (!s.tutorial) {

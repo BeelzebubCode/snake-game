@@ -352,7 +352,9 @@ function GameScreen({
         </div>
         <div className="game-actions">
           <span className="portal-clock" style={{ color: '#72f0b9' }} title="Snake Length">
-            <div style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center' }}><SnakeMark /></div>
+            <div style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center' }}>
+              <SnakeMark />
+            </div>
             {s.snake.length}
           </span>
           <span className="portal-clock">

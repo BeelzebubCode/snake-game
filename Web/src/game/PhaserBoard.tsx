@@ -479,7 +479,7 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
               g.fillStyle(0xb1ffe5);
               g.fillCircle(x + 5, y - 4, 3);
               g.fillCircle(x - 8, y + 12, 2);
-              
+
               if (5 + idx < this.labels.length) {
                 this.labels[5 + idx]
                   .setPosition(x, y + 43)
