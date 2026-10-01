@@ -132,6 +132,7 @@ describe('maps and original options', () => {
     const e = new GameEngine();
     e.state.phase = 'challenge';
     e.state.score = MAP_SCORE_STEP - 450;
+    e.state.inventory = ['C', 'A', 'T'];
     const snake = structuredClone(e.state.snake),
       letters = structuredClone(e.state.letters);
     expect(e.submitWord('CAT')).toBe(true);

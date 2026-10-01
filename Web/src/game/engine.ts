@@ -104,7 +104,7 @@ export class GameEngine {
       chest: null,
       portal: null,
       obstacles: [],
-      inventory: tutorial ? [] : ['C', 'A', 'T'],
+      inventory: [],
       score: 0,
       hearts: 3,
       elapsed: 0,

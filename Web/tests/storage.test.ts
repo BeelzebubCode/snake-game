@@ -62,6 +62,7 @@ describe('versioned local save', () => {
   it('records scores and unique learned words while keeping tutorial stats separate', () => {
     const e = new GameEngine();
     e.state.phase = 'challenge';
+    e.state.inventory = ['C', 'A', 'T'];
     e.submitWord('CAT');
     const save = recordRound(freshSave(), e.state);
     expect(save.played).toBe(1);

@@ -204,6 +204,7 @@ describe('portals and word construction', () => {
   it('rejects a word already answered this round', () => {
     const e = make();
     e.state.phase = 'challenge';
+    e.state.inventory = ['C', 'A', 'T'];
     expect(e.submitWord('CAT')).toBe(true);
     e.state.phase = 'challenge';
     e.state.inventory = ['C', 'A', 'T'];
