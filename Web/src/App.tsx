@@ -358,11 +358,11 @@ function GameScreen({
             {s.snake.length}
           </span>
           <span className="portal-clock">
-            <i />
+            <i style={{ background: s.portals.length > 0 ? '#2ee6a0' : '#b2a0c7' }} />
             {s.tutorial
               ? t('game.practiceStatus')
               : s.portals.length > 0
-                ? t('game.portalOpen')
+                ? `${t('game.portalOpen')} (${clock(s.nextPortalAt - s.elapsed)})`
                 : t('game.portalCountdown', { seconds: clock(s.nextPortalAt - s.elapsed) })}
           </span>
           <button

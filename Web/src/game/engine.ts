@@ -225,7 +225,7 @@ export class GameEngine {
         if (s.chest && s.chest.expiresAt <= s.elapsed) s.chest = null;
         s.portals = s.portals.filter((p) => p.expiresAt > s.elapsed);
         if (!s.chest && s.elapsed >= s.nextChestAt) this.spawnChest();
-        if (s.portals.length === 0 && s.elapsed >= s.nextPortalAt) this.spawnPortal();
+        if (s.elapsed >= s.nextPortalAt) this.spawnPortal();
         s.obstacles = s.obstacles.filter((brick) => brick.expiresAt > s.elapsed);
         this.fillObstacles();
         if (s.toast && s.elapsed >= s.toastUntil) s.toast = '';
