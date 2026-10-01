@@ -30,7 +30,7 @@ export function loadSave(): SaveData {
         skin: ['mint', 'purple', 'fire', 'ocean'].includes(s.skin) ? s.skin : 'mint',
         snakeStyle: s.snakeStyle === 'classic' ? 'classic' : 'smooth',
         showGrid: typeof s.showGrid === 'boolean' ? s.showGrid : true,
-        map: ['auto', 'midnight', 'forest', 'ocean', 'volcano'].includes(s.map) ? s.map : 'auto',
+        map: ['auto', 'random', 'midnight', 'forest', 'ocean', 'volcano', 'desert', 'space', 'city', 'beach'].includes(s.map) ? s.map : 'auto',
         speed: ['slow', 'normal', 'fast', 'expert'].includes(s.speed) ? s.speed : 'slow',
         portalSeconds: [15, 30, 45, 60, 90, 120].includes(s.portalSeconds) ? s.portalSeconds : 60,
         level: ['all', 'easy', 'medium', 'hard', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(

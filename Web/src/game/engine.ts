@@ -45,6 +45,7 @@ export type GameSound =
   | 'success'
   | 'wrong'
   | 'chest'
+  | 'chestSpin'
   | 'revive'
   | 'death'
   | 'timeout'
@@ -68,6 +69,21 @@ export class GameEngine {
   private tutorialDirectionMoves = 0;
   private gateArmed = true;
   private gateThreshold = 0;
+  // Tracks recent letters placed on the map to drive anti-repeat logic.
+  private letterHistory: string[] = [];
+  
+  private static readonly VOWELS = 'AEIOU';
+  private static readonly POOL_EASY = 'AAAAEEEEEIIIOOOUU' + 'TTTNNNSSSRRR';
+  private static readonly POOL_MID = 'AAAAEEEEEIIIOOOUU' + 'TTTNNNSSSRRR' + 'HHLLDDCCMM';
+  private static readonly POOL_FULL = 
+    'AAAAEEEEEEIIIIOOOOUUU' + 
+    'TTTTNNNNSSSSRRRR' + 
+    'HHLLDDCCMMPPBBFFGGYY' + 
+    'JKVW' + 'QXZ';
+
+  private pickFrom(pool: string): string {
+    return pool[Math.floor(this.random() * pool.length)];
+  }
   constructor(
     settings: Settings = DEFAULT_SETTINGS,
     tutorial = false,
@@ -91,7 +107,7 @@ export class GameEngine {
       chest: null,
       portal: null,
       obstacles: [],
-      inventory: tutorial ? [] : ['C', 'A', 'T'],
+      inventory: [],
       score: 0,
       hearts: 3,
       elapsed: 0,
@@ -105,6 +121,7 @@ export class GameEngine {
       toastUntil: 0,
       reviveRemaining: REVIVE_TIME,
       reviveWord: null,
+      spawnPortal: { x: 8, y: 11, type: 'start' },
       reward: null,
       result: null,
       words: [],
@@ -128,13 +145,11 @@ export class GameEngine {
   private startSnake(): Cell[] {
     return this.makeSnake(4);
   }
-  // Lays a snake of any length out safely: a straight row heading right, with long bodies folding
-  // back along the row beneath so the head always has open space ahead.
+  // Lays a snake of any length out safely by placing all segments at the same starting position.
+  // As the head moves, the stacked segments will naturally "slither out" of the origin.
   private makeSnake(length: number): Cell[] {
-    const headX = Math.max(8, Math.min(COLS - 10, length + 1));
-    return Array.from({ length }, (_, i) =>
-      i < headX ? { x: headX - i, y: 11 } : { x: i - headX + 1, y: 12 },
-    );
+    const headX = 8;
+    return Array.from({ length }, () => ({ x: headX, y: 11 }));
   }
   private toast(text: string, duration = 2600) {
     this.state.toast = text;
@@ -224,6 +239,10 @@ export class GameEngine {
         this.moveAccumulator -= this.interval;
         this.step();
       }
+      if (s.spawnPortal) {
+        const stackedCount = s.snake.filter((p) => p.x === s.spawnPortal!.x && p.y === s.spawnPortal!.y).length;
+        if (stackedCount === 0) s.spawnPortal = null;
+      }
     } else if (s.phase === 'warp') {
       s.warpRemaining = Math.max(0, s.warpRemaining - dt);
       if (!s.warpRemaining) {
@@ -293,8 +312,35 @@ export class GameEngine {
       : null;
   }
   private randomLetter(): string {
-    const pool = 'AAAAAEEEEEEEIIIIOOOOUUUTTTTNNNNSSSSRRRRHHLLDDCCMMPPBBFFGGJKQVWXYZ';
-    return pool[Math.min(pool.length - 1, Math.floor(this.random() * pool.length))];
+    const { score, letters, inventory } = this.state;
+    const V = GameEngine.VOWELS;
+
+    const onMap = letters.map(l => l.letter);
+    const hasVowel = onMap.some(l => V.includes(l)) || inventory.some(l => V.includes(l));
+    
+    // 100% Vowel Guarantee
+    if (!hasVowel) {
+      return V[Math.floor(this.random() * V.length)];
+    }
+
+    const pool = score < 500 ? GameEngine.POOL_EASY : score < 1500 ? GameEngine.POOL_MID : GameEngine.POOL_FULL;
+
+    let letter = this.pickFrom(pool);
+    
+    // Anti-repeat
+    for (let i = 0; i < 3; i++) {
+      let isRepeat = this.letterHistory.includes(letter) || onMap.includes(letter);
+      if (letter === 'Q' && !onMap.includes('U') && !inventory.includes('U')) isRepeat = true;
+      
+      if (isRepeat) {
+        letter = this.pickFrom(pool);
+      } else {
+        break;
+      }
+    }
+    
+    this.letterHistory = [...this.letterHistory.slice(-9), letter];
+    return letter;
   }
   private fillLetters() {
     if (this.state.tutorial) return;
@@ -502,6 +548,8 @@ export class GameEngine {
       s.phase = 'chest';
       this.queued = [];
       this.boosted = false;
+      // Spin sound fires immediately when the chest is hit (or auto-opened).
+      if (!s.tutorial) this.sound('chestSpin');
       this.publish();
       return;
     }
@@ -544,6 +592,7 @@ export class GameEngine {
     if (!s.tutorial || s.phase !== 'chest' || !s.reward || s.reward.opened) return;
     s.reward.opened = true;
     s.reward.revealed = s.settings.reducedMotion;
+    this.sound('chestSpin');
     this.publish();
   }
   private nextLesson() {
@@ -677,6 +726,18 @@ export class GameEngine {
     } else this.beginCountdown();
     this.publish();
   }
+  swapChestLetter(rewardIndex: number, inventoryIndex: number) {
+    const s = this.state;
+    if (s.phase !== 'chest' || !s.reward?.revealed) return;
+    
+    // Swap the letters
+    const temp = s.reward.letters[rewardIndex];
+    s.reward.letters[rewardIndex] = s.inventory[inventoryIndex];
+    s.inventory[inventoryIndex] = temp;
+    
+    this.publish();
+  }
+
   claimChest() {
     const s = this.state;
     if (s.phase !== 'chest' || !s.reward?.opened || !s.reward.revealed) return false;
@@ -742,6 +803,7 @@ export class GameEngine {
     s.score = Math.max(0, s.score - REVIVE_PENALTY);
     // The body keeps its length; the price is points and part of the inventory instead.
     s.snake = this.makeSnake(s.snake.length);
+    s.spawnPortal = { x: 8, y: 11, type: 'revive' };
     s.previousSnake = s.snake.map((p) => ({ ...p }));
     s.direction = 'right';
     s.letters = s.letters.filter((p) => !s.snake.some((q) => same(p, q)));

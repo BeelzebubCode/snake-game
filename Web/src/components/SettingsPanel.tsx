@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent } from 'react';
 import Modal from './Modal';
+import { CustomSelect } from './CustomSelect';
 import { LanguageProvider, translator } from '../i18n';
 import type { Translator } from '../i18n';
 import { MAPS, MAP_SCORE_STEP, SKINS, hex } from '../game/appearance';
@@ -145,16 +146,15 @@ export default function SettingsPanel({
                   </fieldset>
                   <label>
                     {' '}
-                    {t('settings.snakeStyle')}{' '}
-                    <select
+                    {t('settings.snakeStyle')}
+                    <CustomSelect
                       value={draft.snakeStyle}
-                      onChange={(e) =>
-                        setDraft({ ...draft, snakeStyle: e.target.value as Settings['snakeStyle'] })
-                      }
-                    >
-                      <option value="smooth">{t('settings.smooth')}</option>
-                      <option value="classic">{t('settings.classic')}</option>
-                    </select>
+                      onChange={(val) => setDraft({ ...draft, snakeStyle: val as Settings['snakeStyle'] })}
+                      options={[
+                        { value: 'smooth', label: t('settings.smooth') },
+                        { value: 'classic', label: t('settings.classic') },
+                      ]}
+                    />
                   </label>
                 </div>
               </section>
@@ -176,26 +176,28 @@ export default function SettingsPanel({
                 <div className="settings-list">
                   <label>
                     {' '}
-                    {t('settings.map')}{' '}
-                    <select
+                    {t('settings.map')}
+                    <CustomSelect
                       value={draft.map}
-                      onChange={(e) =>
-                        setDraft({ ...draft, map: e.target.value as Settings['map'] })
-                      }
-                    >
-                      <option value="auto">{t('settings.autoMap')}</option>
-                      {MAPS.map((map) => (
-                        <option key={map.id} value={map.id}>
-                          {map.name} · {t(map.description)}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setDraft({ ...draft, map: val as Settings['map'] })}
+                      options={[
+                        { value: 'auto', label: t('settings.autoMap') },
+                        { value: 'random', label: t('settings.randomMap') },
+                        ...MAPS.map((map) => ({
+                          value: map.id,
+                          label: `${map.name} · ${t(map.description)}`
+                        }))
+                      ]}
+                    />
                   </label>
                   <div className="map-options" aria-label={t('settings.mapPreviews')}>
                     {MAPS.map((map, i) => (
-                      <div
+                      <button
+                        type="button"
                         key={map.id}
-                        className="map-preview"
+                        className={'map-preview ' + (draft.map === map.id ? 'active' : '')}
+                        aria-pressed={draft.map === map.id}
+                        onClick={() => setDraft({ ...draft, map: map.id as Settings['map'] })}
                         style={
                           {
                             background: hex(map.background),
@@ -208,7 +210,7 @@ export default function SettingsPanel({
                         <small>
                           {format(i * MAP_SCORE_STEP)} {t('common.score')}
                         </small>
-                      </div>
+                      </button>
                     ))}
                   </div>
                   <label className="check-row">
@@ -239,67 +241,61 @@ export default function SettingsPanel({
                 <div className="settings-list">
                   <label>
                     {t('settings.language')}
-                    <select
+                    <CustomSelect
                       value={draft.language}
-                      onChange={(e) =>
-                        setDraft({ ...draft, language: e.target.value as Settings['language'] })
-                      }
-                    >
-                      <option value="en">English</option>
-                      <option value="th">ไทย (Thai)</option>
-                    </select>
+                      onChange={(val) => setDraft({ ...draft, language: val as Settings['language'] })}
+                      options={[
+                        { value: 'en', label: 'English' },
+                        { value: 'th', label: 'ไทย (Thai)' },
+                      ]}
+                    />
                     <small>{t('settings.languageHint')}</small>
                   </label>
 
                   <label>
                     {' '}
-                    {t('settings.speed')}{' '}
-                    <select
+                    {t('settings.speed')}
+                    <CustomSelect
                       value={draft.speed}
-                      onChange={(e) =>
-                        setDraft({ ...draft, speed: e.target.value as Settings['speed'] })
-                      }
-                    >
-                      <option value="slow">{t('settings.slow')}</option>
-                      <option value="normal">{t('settings.normal')}</option>
-                      <option value="fast">{t('settings.fast')}</option>
-                      <option value="expert">{t('settings.expert')}</option>
-                    </select>
+                      onChange={(val) => setDraft({ ...draft, speed: val as Settings['speed'] })}
+                      options={[
+                        { value: 'slow', label: t('settings.slow') },
+                        { value: 'normal', label: t('settings.normal') },
+                        { value: 'fast', label: t('settings.fast') },
+                        { value: 'expert', label: t('settings.expert') },
+                      ]}
+                    />
                   </label>
                   <label>
                     {' '}
-                    {t('settings.portalTimer')}{' '}
-                    <select
+                    {t('settings.portalTimer')}
+                    <CustomSelect
                       value={draft.portalSeconds}
-                      onChange={(e) =>
-                        setDraft({ ...draft, portalSeconds: Number(e.target.value) })
-                      }
-                    >
-                      <option value={15}>{t('settings.seconds15')}</option>
-                      <option value={30}>{t('settings.seconds30')}</option>
-                      <option value={45}>{t('settings.seconds45')}</option>
-                      <option value={60}>{t('settings.minute1')}</option>
-                      <option value={90}>{t('settings.minuteHalf')}</option>
-                      <option value={120}>{t('settings.minutes2')}</option>
-                    </select>
+                      onChange={(val) => setDraft({ ...draft, portalSeconds: Number(val) })}
+                      options={[
+                        { value: 15, label: t('settings.seconds15') },
+                        { value: 30, label: t('settings.seconds30') },
+                        { value: 45, label: t('settings.seconds45') },
+                        { value: 60, label: t('settings.minute1') },
+                        { value: 90, label: t('settings.minuteHalf') },
+                        { value: 120, label: t('settings.minutes2') },
+                      ]}
+                    />
                   </label>
                   <label>
                     {' '}
                     {t('settings.wordLevel')}{' '}
-                    <select
+                    <CustomSelect
                       value={draft.level}
-                      onChange={(e) =>
-                        setDraft({ ...draft, level: e.target.value as Settings['level'] })
-                      }
-                    >
-                      <option value="all">{t('settings.allLevels')}</option>
-                      <option value="easy">{t('settings.easy')}</option>
-                      <option value="medium">{t('settings.medium')}</option>
-                      <option value="hard">{t('settings.hard')}</option>
-                      {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map((level) => (
-                        <option key={level}>{level}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setDraft({ ...draft, level: val as Settings['level'] })}
+                      options={[
+                        { value: 'all', label: t('settings.allLevels') },
+                        { value: 'easy', label: t('settings.easy') },
+                        { value: 'medium', label: t('settings.medium') },
+                        { value: 'hard', label: t('settings.hard') },
+                        ...['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(level => ({ value: level, label: level }))
+                      ]}
+                    />
                     <small>{t('settings.levelNote')}</small>
                   </label>
                 </div>

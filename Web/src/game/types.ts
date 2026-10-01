@@ -4,7 +4,7 @@ export type Direction = 'up' | 'down' | 'left' | 'right';
 export type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 export type Speed = 'slow' | 'normal' | 'fast' | 'expert';
 export type SkinId = 'mint' | 'purple' | 'fire' | 'ocean';
-export type MapChoice = 'auto' | 'midnight' | 'forest' | 'ocean' | 'volcano';
+export type MapChoice = 'auto' | 'random' | 'midnight' | 'forest' | 'ocean' | 'volcano' | 'desert' | 'space' | 'city' | 'beach';
 export type VocabularyFilter = Level | 'all' | 'easy' | 'medium' | 'hard';
 export type ChestKind = 'silver' | 'gold' | 'purple' | 'red';
 export type Phase =
@@ -96,6 +96,7 @@ export interface GameState {
   toastUntil: number;
   reviveRemaining: number;
   reviveWord: Word | null;
+  spawnPortal: { x: number; y: number; type: 'start' | 'revive' } | null;
   reward: Reward | null;
   result: WordResult | null;
   words: WordResult[];

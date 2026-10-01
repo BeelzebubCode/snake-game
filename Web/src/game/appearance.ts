@@ -45,11 +45,57 @@ export const MAPS = [
     accent: 0xffac55,
     secondary: 0xf15b7e,
   },
+  {
+    id: 'desert',
+    name: 'Golden Pyramid',
+    description: 'map.desert',
+    background: 0x1a1408,
+    grid: 0x332a12,
+    accent: 0xe6aa3a,
+    secondary: 0xf07d30,
+  },
+  {
+    id: 'space',
+    name: 'Nebula Drift',
+    description: 'map.space',
+    background: 0x000510,
+    grid: 0x0d1530,
+    accent: 0xb07aff,
+    secondary: 0xff6eb4,
+  },
+  {
+    id: 'city',
+    name: 'Night City',
+    description: 'map.city',
+    background: 0x070d1a,
+    grid: 0x0f1f33,
+    accent: 0xffe066,
+    secondary: 0x3af0d0,
+  },
+  {
+    id: 'beach',
+    name: 'Coral Shore',
+    description: 'map.beach',
+    background: 0x061424,
+    grid: 0x0d2640,
+    accent: 0x5de8d0,
+    secondary: 0xffd97a,
+  },
 ] as const;
 export function mapFor(stage: number, choice: MapChoice = 'auto') {
-  return choice === 'auto'
-    ? MAPS[(Number.isFinite(stage) ? Math.max(0, Math.floor(stage)) : 0) % MAPS.length]
-    : (MAPS.find((map) => map.id === choice) ?? MAPS[0]);
+  if (choice !== 'auto' && choice !== 'random') {
+    return MAPS.find((map) => map.id === choice) ?? MAPS[0];
+  }
+  const s = Number.isFinite(stage) ? Math.max(0, Math.floor(stage)) : 0;
+  if (choice === 'auto') return MAPS[s % MAPS.length];
+  
+  let currentIdx = 0;
+  for (let i = 1; i <= s; i++) {
+    const hash = (i * 2654435761) >>> 0;
+    const offset = 1 + (hash % (MAPS.length - 1));
+    currentIdx = (currentIdx + offset) % MAPS.length;
+  }
+  return MAPS[currentIdx];
 }
 export const DIRECTION_LABELS: Record<
   Direction,

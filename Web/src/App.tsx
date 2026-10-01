@@ -170,14 +170,19 @@ function GameScreen({
   const { t, language } = useI18n();
   const LESSONS = getLessons(language);
   const s = useSyncExternalStore(engine.subscribe, engine.getSnapshot);
+  const [chestSwapSource, setChestSwapSource] = useState<number | null>(null);
   const [draft, setDraft] = useState(''),
     [revivalDraft, setRevivalDraft] = useState(''),
     [leave, setLeave] = useState(false),
     [speechError, setSpeechError] = useState(''),
     [inputFeedback, setInputFeedback] = useState('');
+  const currentMap = mapFor(s.mapStage, s.settings.map);
   const playRef = useRef<HTMLDivElement>(null);
   const recordRef = useRef(onRecord);
   recordRef.current = onRecord;
+  useEffect(() => {
+    audio.setMusicTheme(currentMap.id);
+  }, [currentMap.id]);
   const previousPhase = useRef(s.phase);
   useEffect(() => {
     if (s.phase !== previousPhase.current) setInputFeedback('');
@@ -198,6 +203,9 @@ function GameScreen({
       setRevivalDraft('');
     previousPhase.current = s.phase;
   }, [s.phase, s]);
+  useEffect(() => {
+    audio.duckMusic(s.phase === 'chest');
+  }, [s.phase]);
   const musicOn = soundEnabled && !['paused', 'gameOver', 'tutorialDone'].includes(s.phase);
   useEffect(() => {
     audio.setMusic(musicOn);
@@ -292,7 +300,6 @@ function GameScreen({
   };
   const phase = s.phase;
   const reviewingBag = phase === 'lessonReview' && [2, 3, 6].includes(s.lesson);
-  const currentMap = mapFor(s.mapStage, s.settings.map);
   const directionPreview = DIRECTION_LABELS[s.nextDirection];
   return (
     <div
@@ -317,7 +324,7 @@ function GameScreen({
           </button>
           <span
             className="map-badge"
-            title={s.settings.map === 'auto' ? t('game.mapProgress') : t('game.selectedMap')}
+            title={s.settings.map === 'auto' || s.settings.map === 'random' ? t('game.mapProgress') : t('game.selectedMap')}
           >
             {currentMap.name}
           </span>
@@ -340,6 +347,9 @@ function GameScreen({
           </div>
         </div>
         <div className="game-actions">
+          <span className="portal-clock" style={{ color: '#72f0b9' }} title="Snake Length">
+            🐍 {s.snake.length}
+          </span>
           <span className="portal-clock">
             <i />{' '}
             {s.tutorial
@@ -592,9 +602,7 @@ function GameScreen({
               placeholder={
                 s.inventory.length === 0
                   ? t('portal.emptyPlaceholder')
-                  : s.tutorial
-                    ? 'CAT'
-                    : t('portal.placeholder')
+                  : t('portal.placeholder')
               }
               aria-describedby="word-input-help word-input-feedback"
               aria-invalid={Boolean(wordFeedback)}
@@ -612,7 +620,12 @@ function GameScreen({
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {
                   e.preventDefault();
-                  changeDraft('');
+                  if (draft) {
+                    changeDraft('');
+                  } else {
+                    engine.pause();
+                    audio.stop();
+                  }
                 }
               }}
             />
@@ -765,17 +778,58 @@ function GameScreen({
               }
               aria-live="polite"
             >
-              {s.reward.letters.map((letter, i) => (
-                <span
-                  className={'letter-tile ' + (s.reward!.revealed ? 'reward-reveal' : 'shuffling')}
-                  style={{ '--delay': i * 90 + 'ms' } as CSSProperties}
-                  key={i}
-                >
-                  {s.reward!.revealed
-                    ? letter
-                    : String.fromCharCode(65 + ((Math.floor(s.reward!.elapsed / 80) + i * 7) % 26))}
-                </span>
-              ))}
+              {s.reward.letters.map((letter, i) => {
+                const room = Math.max(0, MAX_LETTERS - s.inventory.length);
+                const isDiscarded = s.reward!.revealed && i >= room;
+                const isSelected = chestSwapSource === i;
+                return (
+                  <button
+                    className={
+                      'letter-tile ' + 
+                      (s.reward!.revealed ? 'reward-reveal' : 'shuffling') +
+                      (isSelected ? ' selected' : '') +
+                      (isDiscarded ? ' discarded' : '')
+                    }
+                    style={{ '--delay': i * 90 + 'ms' } as CSSProperties}
+                    key={i}
+                    onClick={() => {
+                      if (s.reward!.revealed) {
+                        setChestSwapSource(isSelected ? null : i);
+                      }
+                    }}
+                    disabled={!s.reward!.revealed}
+                  >
+                    {s.reward!.revealed
+                      ? letter
+                      : String.fromCharCode(65 + ((Math.floor(s.reward!.elapsed / 80) + i * 7) % 26))}
+                    {isDiscarded && <span className="discard-badge">×</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {s.reward.revealed && s.inventory.length + s.reward.letters.length > MAX_LETTERS && (
+            <div className="chest-swap-area">
+              <p className="swap-hint">
+                {t('chest.swapHint')}
+              </p>
+              <div className="swap-inventory-list">
+                {s.inventory.map((letter, i) => (
+                  <button
+                    key={i}
+                    className="letter-tile swap-target"
+                    onClick={() => {
+                      if (chestSwapSource !== null) {
+                        engine.swapChestLetter(chestSwapSource, i);
+                        setChestSwapSource(null);
+                      }
+                    }}
+                    disabled={chestSwapSource === null}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <p className="subtle">{s.tutorial ? t('chest.tutorialHint') : t('chest.paused')}</p>
@@ -788,7 +842,10 @@ function GameScreen({
             <button
               className="button primary full"
               disabled={!s.reward.revealed}
-              onClick={() => engine.claimChest()}
+              onClick={() => {
+                setChestSwapSource(null);
+                engine.claimChest();
+              }}
             >
               {' '}
               {t('chest.claim', { count: CHESTS[s.reward.kind].count })} <span>✓</span>

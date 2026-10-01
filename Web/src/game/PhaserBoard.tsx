@@ -131,7 +131,7 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
                 floor.lineStyle(1, map.accent, 0.12);
                 floor.strokeCircle((i * 191 + 80) % width, (i * 137 + 45) % height, 3 + (i % 5));
               }
-            } else {
+            } else if (map.id === 'volcano') {
               for (let i = 0; i < 10; i++) {
                 const x = (i * 143 + 34) % width,
                   y = (i * 97 + 34) % height;
@@ -144,6 +144,173 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
                 ]);
                 floor.fillStyle(map.accent, 0.09);
                 floor.fillCircle(x + 30, y + 30, 24);
+              }
+            } else if (map.id === 'desert') {
+              // Stars in the night sky (top half)
+              for (let i = 0; i < 80; i++) {
+                const sx = (i * 197 + 31) % width, sy = (i * 113 + 17) % (height * 0.55);
+                floor.fillStyle(0xfff3c4, i % 5 === 0 ? 0.55 : 0.2);
+                floor.fillCircle(sx, sy, i % 7 === 0 ? 1.5 : 0.8);
+              }
+              // Dune horizon silhouette
+              floor.fillStyle(0x2a1e06, 0.85);
+              const dunePoints = [{ x: 0, y: height * 0.72 }];
+              for (let i = 0; i <= 20; i++) {
+                dunePoints.push({
+                  x: (i / 20) * width,
+                  y: height * 0.72 - Math.sin((i / 20) * Math.PI * 3.5) * 28 - (i % 3 === 0 ? 18 : 0),
+                });
+              }
+              dunePoints.push({ x: width, y: height * 0.72 }, { x: width, y: height }, { x: 0, y: height });
+              floor.beginPath();
+              dunePoints.forEach((p, idx) => idx === 0 ? floor.moveTo(p.x, p.y) : floor.lineTo(p.x, p.y));
+              floor.closePath();
+              floor.fillPath();
+              // Pyramid silhouettes — 3 at different depths
+              const pyramids = [
+                { cx: width * 0.22, base: 140, h: 95, alpha: 0.7 },
+                { cx: width * 0.62, base: 200, h: 135, alpha: 0.55 },
+                { cx: width * 0.82, base: 90, h: 58, alpha: 0.45 },
+              ];
+              for (const { cx, base, h, alpha } of pyramids) {
+                const py = height * 0.72;
+                floor.fillStyle(0x1a1008, alpha);
+                floor.beginPath();
+                floor.moveTo(cx, py - h);
+                floor.lineTo(cx + base / 2, py);
+                floor.lineTo(cx - base / 2, py);
+                floor.closePath();
+                floor.fillPath();
+                // Edge highlight
+                floor.lineStyle(1, map.accent, alpha * 0.4);
+                floor.lineBetween(cx, py - h, cx + base / 2, py);
+                floor.lineBetween(cx, py - h, cx - base / 2, py);
+              }
+            } else if (map.id === 'space') {
+              // Dense star field — seeded positions for reproducibility
+              for (let i = 0; i < 200; i++) {
+                const sx = (i * 293 + 47) % width, sy = (i * 179 + 83) % height;
+                const brightness = i % 10 === 0 ? 0.9 : i % 4 === 0 ? 0.5 : 0.25;
+                const size = i % 15 === 0 ? 2 : i % 5 === 0 ? 1.4 : 0.7;
+                floor.fillStyle(i % 3 === 0 ? map.secondary : 0xffffff, brightness);
+                floor.fillCircle(sx, sy, size);
+              }
+              // Nebula clouds — soft layered circles
+              const nebulaSeeds = [
+                { x: width * 0.2, y: height * 0.3, r: 95, color: map.accent, a: 0.06 },
+                { x: width * 0.7, y: height * 0.6, r: 120, color: map.secondary, a: 0.05 },
+                { x: width * 0.5, y: height * 0.15, r: 80, color: map.accent, a: 0.04 },
+                { x: width * 0.85, y: height * 0.8, r: 70, color: map.secondary, a: 0.07 },
+              ];
+              for (const nb of nebulaSeeds) {
+                for (let layer = 3; layer >= 1; layer--) {
+                  floor.fillStyle(nb.color, nb.a * layer);
+                  floor.fillCircle(nb.x, nb.y, nb.r * layer * 0.5);
+                }
+              }
+              // Galaxy spiral arm (faint)
+              floor.lineStyle(1, map.accent, 0.07);
+              const armPoints = Array.from({ length: 80 }, (_, i) => {
+                const t = i / 79, angle = t * Math.PI * 4, r = t * width * 0.35;
+                return { x: width * 0.45 + Math.cos(angle) * r, y: height * 0.45 + Math.sin(angle) * r * 0.55 };
+              });
+              this.stroke(floor, armPoints);
+            } else if (map.id === 'city') {
+              // Moon
+              floor.fillStyle(0xfff8dc, 0.18);
+              floor.fillCircle(width * 0.85, height * 0.12, 22);
+              floor.fillStyle(0x070d1a, 1);
+              floor.fillCircle(width * 0.85 - 10, height * 0.12 - 6, 18);
+              // Stars
+              for (let i = 0; i < 50; i++) {
+                const sx = (i * 241 + 17) % width, sy = (i * 137 + 9) % (height * 0.55);
+                floor.fillStyle(0xffffff, 0.18);
+                floor.fillCircle(sx, sy, 0.8);
+              }
+              // City skyline silhouette — buildings at the bottom
+              const buildings = [
+                { x: 0, w: 60, h: 90 }, { x: 55, w: 40, h: 140 }, { x: 90, w: 55, h: 75 },
+                { x: 140, w: 35, h: 170 }, { x: 170, w: 50, h: 120 }, { x: 215, w: 30, h: 195 },
+                { x: 240, w: 65, h: 100 }, { x: 300, w: 28, h: 155 }, { x: 323, w: 55, h: 85 },
+                { x: 373, w: 40, h: 180 }, { x: 408, w: 70, h: 110 }, { x: 473, w: 35, h: 145 },
+                { x: 503, w: 55, h: 95 }, { x: 553, w: 42, h: 165 }, { x: 590, w: 60, h: 80 },
+                { x: 645, w: 48, h: 175 }, { x: 688, w: 35, h: 120 }, { x: 718, w: 65, h: 90 },
+                { x: 778, w: 40, h: 155 }, { x: 813, w: 55, h: 105 }, { x: 863, w: 30, h: 185 },
+                { x: 888, w: 70, h: 70 }, { x: 953, w: 45, h: 140 }, { x: 993, w: 55, h: 95 },
+                { x: 1043, w: 40, h: 160 }, { x: 1078, w: 60, h: 85 }, { x: 1133, w: 35, h: 125 },
+                { x: 1163, w: 55, h: 100 }, { x: 1213, w: 47, h: 170 }, { x: 1255, w: 25, h: 115 },
+              ];
+              for (const b of buildings) {
+                const by = height - b.h;
+                floor.fillStyle(0x0a1428, 0.92);
+                floor.fillRect(b.x, by, b.w, b.h);
+                // Windows: random lit squares
+                for (let wy = by + 8; wy < height - 6; wy += 14) {
+                  for (let wx = b.x + 5; wx < b.x + b.w - 8; wx += 11) {
+                    const lit = ((wx * 13 + wy * 7 + b.h) % 17) < 9;
+                    if (lit) {
+                      floor.fillStyle(map.accent, 0.45 + ((wx + wy) % 7) * 0.04);
+                      floor.fillRect(wx, wy, 6, 8);
+                    }
+                  }
+                }
+                // Antenna on tall buildings
+                if (b.h > 150) {
+                  floor.lineStyle(1, map.secondary, 0.5);
+                  floor.lineBetween(b.x + b.w / 2, by, b.x + b.w / 2, by - 15);
+                  floor.fillStyle(map.secondary, 0.8);
+                  floor.fillCircle(b.x + b.w / 2, by - 16, 2);
+                }
+              }
+            } else if (map.id === 'beach') {
+              // Night sky + stars
+              for (let i = 0; i < 70; i++) {
+                const sx = (i * 223 + 41) % width, sy = (i * 157 + 13) % (height * 0.5);
+                floor.fillStyle(0xffffff, i % 8 === 0 ? 0.55 : 0.2);
+                floor.fillCircle(sx, sy, i % 9 === 0 ? 1.5 : 0.7);
+              }
+              // Crescent moon
+              floor.fillStyle(0xfff9e0, 0.22);
+              floor.fillCircle(width * 0.78, height * 0.1, 18);
+              floor.fillStyle(0x061424, 1);
+              floor.fillCircle(width * 0.78 + 9, height * 0.1 - 5, 14);
+              // Ocean waves (sine stripes in upper ~55%)
+              for (let row = 0; row < 5; row++) {
+                const baseY = height * 0.38 + row * 24;
+                const pts = Array.from({ length: width + 1 }, (_, xi) => ({
+                  x: xi, y: baseY + Math.sin(xi / 55 + row * 1.2) * 9,
+                }));
+                floor.lineStyle(1, map.accent, 0.08 + row * 0.015);
+                this.stroke(floor, pts);
+              }
+              // Sandy shore gradient (bottom 45%)
+              for (let layer = 0; layer < 8; layer++) {
+                const sy2 = height * 0.55 + layer * (height * 0.45 / 8);
+                floor.fillStyle(0x7a5c2a, 0.04 + layer * 0.01);
+                floor.fillRect(0, sy2, width, height * 0.45 / 8 + 1);
+              }
+              // Palm tree silhouette at left edge
+              const tx = 48, ty = height * 0.56;
+              floor.lineStyle(4, 0x2a1a06, 0.75);
+              // Trunk (curved)
+              this.stroke(floor, [
+                { x: tx, y: ty + 2 }, { x: tx + 4, y: ty - 28 }, { x: tx + 10, y: ty - 60 },
+                { x: tx + 8, y: ty - 85 },
+              ]);
+              // Fronds
+              const fronds = [
+                [{ x: tx + 8, y: ty - 85 }, { x: tx - 30, y: ty - 105 }],
+                [{ x: tx + 8, y: ty - 85 }, { x: tx + 38, y: ty - 108 }],
+                [{ x: tx + 8, y: ty - 85 }, { x: tx - 10, y: ty - 118 }],
+                [{ x: tx + 8, y: ty - 85 }, { x: tx + 22, y: ty - 120 }],
+                [{ x: tx + 8, y: ty - 85 }, { x: tx + 5, y: ty - 122 }],
+              ];
+              floor.lineStyle(3, 0x1e4a10, 0.65);
+              fronds.forEach((pts) => this.stroke(floor, pts));
+              // Moon reflection in water
+              for (let rl = 0; rl < 4; rl++) {
+                floor.fillStyle(0xfff9e0, 0.04 - rl * 0.008);
+                floor.fillRect(width * 0.74, height * 0.42 + rl * 5, 30 - rl * 5, 2);
               }
             }
             if (s.settings.showGrid) {
@@ -216,6 +383,16 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
               }
             });
             this.events.once('shutdown', () => this.offSound?.());
+            // When Phaser detects the window/tab lost focus it pauses its own
+            // render loop before window.blur can reach App.tsx's handler.
+            // Forwarding the Phaser BLUR event to engine.pause() ensures the
+            // Pause modal always appears instead of the game freezing silently.
+            this.game.events.on(Phaser.Core.Events.BLUR, () => {
+              engine.pause();
+            });
+            this.events.once('shutdown', () =>
+              this.game.events.off(Phaser.Core.Events.BLUR),
+            );
             this.game.canvas.setAttribute('aria-label', t('board.accessible'));
             this.game.canvas.setAttribute('role', 'img');
           }
@@ -257,6 +434,64 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
                 .setColor('#b9ffde')
                 .setFontSize(12)
                 .setVisible(true);
+            }
+            if (s.spawnPortal) {
+              const x = (s.spawnPortal.x + 0.5) * CELL,
+                y = (s.spawnPortal.y + 0.5) * CELL;
+              
+              if (s.spawnPortal.type === 'revive') {
+                // Angel Wings (Flapping)
+                const flap = Math.sin(time / 200) * 8;
+                g.fillStyle(0xd6f1ff, 0.6);
+                // Left wing feathers
+                g.fillTriangle(x - 15, y - 5, x - 50, y - 25 - flap, x - 15, y + 15);
+                g.fillTriangle(x - 15, y - 5, x - 45, y - 5 - flap * 0.6, x - 15, y + 15);
+                g.fillTriangle(x - 15, y - 5, x - 35, y + 15 - flap * 0.2, x - 15, y + 15);
+                // Right wing feathers
+                g.fillTriangle(x + 15, y - 5, x + 50, y - 25 - flap, x + 15, y + 15);
+                g.fillTriangle(x + 15, y - 5, x + 45, y - 5 - flap * 0.6, x + 15, y + 15);
+                g.fillTriangle(x + 15, y - 5, x + 35, y + 15 - flap * 0.2, x + 15, y + 15);
+
+                g.fillStyle(0x3498db, 0.1);
+                g.fillCircle(x, y, 44 + pulse);
+                g.lineStyle(2, 0x3498db, 0.7);
+                g.strokeCircle(x, y, 35 + pulse);
+                g.fillStyle(0x1a4060);
+                g.fillRoundedRect(x - 25, y - 29, 50, 58, { tl: 23, tr: 23, bl: 6, br: 6 });
+                g.lineStyle(2, 0x5bc0eb, 0.9);
+                g.strokeRoundedRect(x - 25, y - 29, 50, 58, { tl: 23, tr: 23, bl: 6, br: 6 });
+                g.fillStyle(0x1f5c87, 0.8);
+                g.fillRoundedRect(x - 18, y - 23, 36, 48, { tl: 18, tr: 18, bl: 3, br: 3 });
+                g.fillStyle(0xd6f1ff);
+                g.fillCircle(x + 5, y - 4, 3);
+                g.fillCircle(x - 8, y + 12, 2);
+              } else {
+                // Galaxy Start Portal
+                const spin = time / 500;
+                g.fillStyle(0x9b59b6, 0.15); // purple aura
+                g.fillCircle(x, y, 40 + pulse * 1.5);
+                g.lineStyle(3, 0x8e44ad, 0.8);
+                g.strokeCircle(x, y, 30 + pulse);
+                
+                // Rotating star / galaxy core
+                g.fillStyle(0xe056fd, 0.6);
+                g.fillTriangle(
+                  x + Math.cos(spin) * 35, y + Math.sin(spin) * 35,
+                  x + Math.cos(spin + 2) * 10, y + Math.sin(spin + 2) * 10,
+                  x + Math.cos(spin - 2) * 10, y + Math.sin(spin - 2) * 10
+                );
+                g.fillTriangle(
+                  x + Math.cos(spin + Math.PI) * 35, y + Math.sin(spin + Math.PI) * 35,
+                  x + Math.cos(spin + Math.PI + 2) * 10, y + Math.sin(spin + Math.PI + 2) * 10,
+                  x + Math.cos(spin + Math.PI - 2) * 10, y + Math.sin(spin + Math.PI - 2) * 10
+                );
+                
+                // Core
+                g.fillStyle(0xf1c40f, 0.9);
+                g.fillCircle(x, y, 10);
+                g.fillStyle(0xffffff, 1);
+                g.fillCircle(x, y, 5);
+              }
             }
             s.obstacles.forEach((brick) => {
               const x = (brick.x + 0.5) * CELL,
@@ -415,6 +650,7 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
           input: { keyboard: false },
           audio: { noAudio: true },
           banner: false,
+
         });
       })
       .catch(() => {
