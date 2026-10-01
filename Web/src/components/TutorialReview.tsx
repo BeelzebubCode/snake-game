@@ -24,6 +24,11 @@ function getReviews(t: Translator) {
       text: t('review.chestText'),
       action: t('review.chestNext'),
     },
+    6: {
+      title: t('review.brickTitle'),
+      text: t('review.brickText'),
+      action: t('review.brickNext'),
+    },
   };
   return reviews;
 }

@@ -34,6 +34,7 @@ function LessonPicture({ step }: { step: number }) {
           '',
           t('tutorial.portalPicture'),
           t('tutorial.wordPicture'),
+          t('tutorial.brickPicture'),
           t('tutorial.revivePicture'),
         ][step]
       }
@@ -190,6 +191,41 @@ function LessonPicture({ step }: { step: number }) {
         </g>
       )}
       {step === 6 && (
+        <g>
+          <defs>
+            <linearGradient id="lesson-fade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#3a4254" />
+              <stop offset="1" stopColor="#d6453a" />
+            </linearGradient>
+          </defs>
+          <rect x="80" y="62" width="56" height="56" rx="10" fill="url(#lesson-fade)" />
+          <path
+            d="M80 90H136M108 62V90M94 90V118M122 90V118"
+            stroke="#5e1a14"
+            strokeWidth="3"
+            fill="none"
+          />
+          <text x="108" y="144" textAnchor="middle" fill="#b6cadd" fontSize="12">
+            {t('tutorial.fadePicture')}
+          </text>
+          <path d="M170 90H214m-10-8 10 8-10 8" fill="none" stroke="#ff7187" strokeWidth="3" />
+          <text x="300" y="86" textAnchor="middle" fill="#ff9aa8" fontSize="30" fontWeight="700">
+            −50
+          </text>
+          <text x="300" y="116" textAnchor="middle" fill="#b6cadd" fontSize="13">
+            {t('common.score')}
+          </text>
+          <text x="400" y="100" textAnchor="middle" fill="#b6cadd" fontSize="30">
+            +
+          </text>
+          <rect x="430" y="66" width="52" height="58" rx="10" fill="#f1c40f" opacity=".35" />
+          <path d="M432 70 480 120M480 70 432 120" stroke="#ff7187" strokeWidth="5" />
+          <text x="456" y="104" textAnchor="middle" fill="#19202a" fontSize="28" fontWeight="700">
+            ?
+          </text>
+        </g>
+      )}
+      {step === 7 && (
         <g>
           <text x="168" y="103" fill="#ff7187" fontSize="46" textAnchor="middle">
             ♥ ♥ ♥

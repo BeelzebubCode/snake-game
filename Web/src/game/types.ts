@@ -12,6 +12,7 @@ export type Phase =
   | 'lessonReview'
   | 'countdown'
   | 'playing'
+  | 'warp'
   | 'challenge'
   | 'wordResult'
   | 'chest'
@@ -53,6 +54,10 @@ export interface Chest extends Cell {
 export interface Portal extends Cell {
   expiresAt: number;
 }
+export interface Obstacle extends Cell {
+  id: number;
+  expiresAt: number;
+}
 export interface Reward {
   kind: ChestKind;
   letters: string[];
@@ -75,6 +80,7 @@ export interface GameState {
   letters: Letter[];
   chest: Chest | null;
   portal: Portal | null;
+  obstacles: Obstacle[];
   inventory: string[];
   score: number;
   hearts: number;
@@ -83,6 +89,11 @@ export interface GameState {
   nextChestAt: number;
   countdown: number;
   challengeRemaining: number;
+  warpRemaining: number;
+  /** True when a full inventory, not the snake, pulled the player into the gate. */
+  forced: boolean;
+  toast: string;
+  toastUntil: number;
   reviveRemaining: number;
   reviveWord: Word | null;
   reward: Reward | null;
@@ -101,7 +112,17 @@ export const COLS = 40,
   CELL = 32;
 export const LETTER_LIFETIME = 30_000,
   LETTER_COUNT = 3,
-  REVIVE_TIME = 30_000;
+  REVIVE_TIME = 30_000,
+  OBSTACLE_COUNT = 5,
+  OBSTACLE_LIFETIME = 40_000,
+  OBSTACLE_SCORE_PENALTY = 50,
+  MAX_LETTERS = 30,
+  FORCED_GATE_MIN = 20,
+  FORCED_GATE_SPREAD = 6,
+  WARP_TIME = 1_200,
+  TIMEOUT_PENALTY = 100,
+  REVIVE_PENALTY = 100,
+  REVIVE_LETTER_LOSS = 5;
 export const DEFAULT_SETTINGS: Settings = {
   language: 'en',
   speed: 'slow',

@@ -52,9 +52,22 @@ export function getLessons(language: Language) {
       tip: t('lesson.word.tip'),
     },
     {
+      title: t('lesson.brick.title'),
+      summary: t('lesson.brick.summary'),
+      details: [t('lesson.brick.explain'), t('lesson.brick.fade')],
+      task: t('lesson.brick.task'),
+      action: t('lesson.brick.action'),
+      tip: t('lesson.brick.tip'),
+    },
+    {
       title: t('lesson.hearts.title'),
       summary: t('lesson.hearts.summary'),
-      details: [t('lesson.hearts.pause'), t('lesson.hearts.revive'), t('lesson.hearts.retry')],
+      details: [
+        t('lesson.hearts.pause'),
+        t('lesson.hearts.revive'),
+        t('lesson.hearts.retry'),
+        t('lesson.hearts.bag'),
+      ],
       task: t('lesson.hearts.task'),
       action: t('lesson.hearts.action'),
       tip: t('lesson.hearts.tip'),

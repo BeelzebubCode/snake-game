@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import type { GameEngine } from './engine';
-import { CELL, CHESTS, COLS, ROWS } from './types';
+import { CELL, CHESTS, COLS, OBSTACLE_LIFETIME, ROWS } from './types';
 import {
   DIRECTION_LABELS,
   countdownArrow,
@@ -53,6 +53,29 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
             graphics.moveTo(points[0].x, points[0].y);
             for (const point of points.slice(1)) graphics.lineTo(point.x, point.y);
             graphics.strokePath();
+          }
+          // A rounded tile drawn in 1px slices. As time runs out its colour fades to slate from the
+          // top down, with a soft edge, so the remaining time reads as the colour left at the bottom.
+          private fadeTile(
+            g: PhaserType.GameObjects.Graphics,
+            cx: number,
+            cy: number,
+            size: number,
+            radius: number,
+            color: number,
+            ratio: number,
+          ) {
+            const faded = 1 - Math.max(0, Math.min(1, ratio)),
+              top = cy - size / 2;
+            for (let i = 0; i < size; i++) {
+              const t = (i + 0.5) / size,
+                amount = Math.max(0, Math.min(1, (faded * 1.35 - t) / 0.35)),
+                edge = Math.min(i + 0.5, size - i - 0.5),
+                inset =
+                  edge < radius ? radius - Math.sqrt(radius * radius - (radius - edge) ** 2) : 0;
+              g.fillStyle(mixColor(color, 0x3a4254, amount * 0.9));
+              g.fillRect(cx - size / 2 + inset, top + i, size - inset * 2, 1);
+            }
           }
           private drawFloor() {
             const s = engine.state,
@@ -173,18 +196,22 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
                   .setOrigin(0.5),
               );
             this.offSound = engine.onSound((name) => {
-              if (name !== 'collect' || engine.state.settings.reducedMotion) return;
+              if ((name !== 'collect' && name !== 'smash') || engine.state.settings.reducedMotion)
+                return;
               const p = engine.state.snake[0],
-                skin = SKINS[engine.state.settings.skin];
-              for (let i = 0; i < 10; i++) {
-                const a = (i / 10) * Math.PI * 2;
+                skin = SKINS[engine.state.settings.skin],
+                smash = name === 'smash',
+                count = smash ? 16 : 10;
+              for (let i = 0; i < count; i++) {
+                const a = (i / count) * Math.PI * 2,
+                  speed = smash ? 70 + (i % 3) * 35 : 55;
                 this.particles.push({
                   x: (p.x + 0.5) * CELL,
                   y: (p.y + 0.5) * CELL,
-                  vx: Math.cos(a) * 55,
-                  vy: Math.sin(a) * 55,
-                  life: 450,
-                  color: i % 2 ? skin.head : 0xf1c40f,
+                  vx: Math.cos(a) * speed,
+                  vy: Math.sin(a) * speed,
+                  life: smash ? 600 : 450,
+                  color: smash ? (i % 2 ? 0xd6453a : 0x7a231b) : i % 2 ? skin.head : 0xf1c40f,
                 });
               }
             });
@@ -231,22 +258,42 @@ export default function PhaserBoard({ engine }: { engine: GameEngine }) {
                 .setFontSize(12)
                 .setVisible(true);
             }
+            s.obstacles.forEach((brick) => {
+              const x = (brick.x + 0.5) * CELL,
+                y = (brick.y + 0.5) * CELL,
+                ratio = s.tutorial
+                  ? 1
+                  : Math.max(0, Math.min(1, (brick.expiresAt - s.elapsed) / OBSTACLE_LIFETIME));
+              g.fillStyle(0xff3b30, 0.1);
+              g.fillCircle(x, y, 21);
+              this.fadeTile(g, x, y, 28, 6, 0xd6453a, ratio);
+              // Brick courses: three rows of mortar with staggered joints.
+              g.lineStyle(2, 0x5e1a14, 0.9);
+              for (const row of [-4.5, 4.5]) g.lineBetween(x - 14, y + row, x + 14, y + row);
+              g.lineBetween(x, y - 14, x, y - 4.5);
+              g.lineBetween(x - 7, y - 4.5, x - 7, y + 4.5);
+              g.lineBetween(x + 7, y - 4.5, x + 7, y + 4.5);
+              g.lineBetween(x, y + 4.5, x, y + 14);
+              if (ratio < 0.2 && Math.floor(time / 180) % 2 === 0) {
+                g.lineStyle(2, 0xffd1d6, 0.9);
+                g.strokeRoundedRect(x - 14, y - 14, 28, 28, 6);
+              }
+            });
             s.letters.forEach((letter, index) => {
               const x = (letter.x + 0.5) * CELL,
                 y = (letter.y + 0.5) * CELL,
                 ratio = s.tutorial ? 1 : Math.max(0, (letter.expiresAt - s.elapsed) / 30_000);
               g.fillStyle(0xf1c40f, 0.1);
               g.fillCircle(x, y, 20);
-              g.fillStyle(0xf1c40f);
-              g.fillRoundedRect(x - 13, y - 14, 26, 26, 7);
-              g.lineStyle(1, 0xffe9a8, 0.8);
-              g.strokeRoundedRect(x - 13, y - 14, 26, 26, 7);
-              g.fillStyle(ratio < 0.2 ? 0xff7187 : 0x2ee6a0, 0.9);
-              g.fillRoundedRect(x - 11, y + 14, 22 * ratio, 2, 1);
+              this.fadeTile(g, x, y - 1, 26, 7, 0xf1c40f, ratio);
+              if (ratio < 0.2 && Math.floor(time / 180) % 2 === 0) {
+                g.lineStyle(2, 0xff7187, 0.95);
+                g.strokeRoundedRect(x - 13, y - 14, 26, 26, 7);
+              }
               this.labels[index]
                 .setPosition(x, y - 1)
                 .setText(letter.letter)
-                .setColor('#191820')
+                .setColor(1 - ratio > 0.55 ? '#f4f7ff' : '#191820')
                 .setFontSize(20)
                 .setVisible(true);
             });

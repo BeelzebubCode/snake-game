@@ -210,7 +210,15 @@ test('English tutorial covers every lesson, chest, inventory review and portal',
   await page.keyboard.press('Enter');
   await expect(page.getByText('แมว', { exact: true })).toBeVisible();
   await expect(page.getByTestId('score')).toHaveText('450');
-  await page.getByRole('button', { name: 'Learn the Run Rules' }).click();
+  await page.getByRole('button', { name: 'Try the Red Brick' }).click();
+  await expect(page.getByRole('heading', { name: 'Watch Out for Red Bricks' })).toBeVisible();
+  await page.getByRole('button', { name: 'Bump the Brick' }).click();
+  await page.clock.runFor(3100 + 2200);
+  await expect(
+    page.getByRole('heading', { name: 'Brick Hit: −50 Points and One Letter' }),
+  ).toBeVisible();
+  await expect(page.getByTestId('score')).toHaveText('400');
+  await page.getByRole('button', { name: 'Got It — Read the Rules' }).click();
   await expect(page.getByRole('heading', { name: 'Pause & Revive' })).toBeVisible();
   await page.getByRole('button', { name: 'Finish Tutorial' }).click();
   await expect(page.getByRole('heading', { name: 'Tutorial Complete!' })).toBeVisible();

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { GameEngine } from '../src/game/engine';
-import { CHESTS, DEFAULT_SETTINGS, LETTER_LIFETIME } from '../src/game/types';
+import {
+  CHESTS,
+  DEFAULT_SETTINGS,
+  LETTER_LIFETIME,
+  MAX_LETTERS,
+  OBSTACLE_COUNT,
+  OBSTACLE_LIFETIME,
+  WARP_TIME,
+} from '../src/game/types';
 import type { ChestKind } from '../src/game/types';
 import { canBuild, scoreWord, Vocabulary } from '../src/data/vocabulary';
 const make = () => new GameEngine({ ...DEFAULT_SETTINGS }, false, () => 0.3, new Vocabulary());
@@ -133,7 +141,10 @@ describe('portals and word construction', () => {
       playing(e);
       e.state.portal = { x: 9, y: 11, expiresAt: 60000 };
       advance(e, 200);
+      expect(e.state.phase).toBe('warp');
+      advance(e, WARP_TIME);
       expect(e.state.phase).toBe('challenge');
+      expect(e.state.forced).toBe(false);
       expect(e.state.challengeRemaining).toBe(duration * 1000);
     }
   });
@@ -178,6 +189,187 @@ describe('portals and word construction', () => {
     expect(e.state.phase).toBe('countdown');
     expect(e.state.snake).toHaveLength(3);
     expect(e.state.inventory).toEqual(letters);
+  });
+  it('deducts 100 points on timeout without going below zero', () => {
+    const e = make();
+    e.state.score = 250;
+    e.state.phase = 'challenge';
+    advance(e, 60_000);
+    expect(e.state.score).toBe(150);
+    e.state.phase = 'challenge';
+    e.state.score = 40;
+    advance(e, 60_000);
+    expect(e.state.score).toBe(0);
+  });
+  it('rejects a word already answered this round', () => {
+    const e = make();
+    e.state.phase = 'challenge';
+    expect(e.submitWord('CAT')).toBe(true);
+    e.state.phase = 'challenge';
+    e.state.inventory = ['C', 'A', 'T'];
+    const score = e.state.score;
+    expect(e.submitWord('CAT')).toBe(false);
+    expect(e.state.score).toBe(score);
+    expect(e.state.inventory).toEqual(['C', 'A', 'T']);
+    expect(e.state.error).not.toBe('');
+  });
+  it('pulls the player into a gate once the bag holds 20 to 25 letters and no gate is open', () => {
+    const e = make();
+    playing(e);
+    e.state.nextPortalAt = Number.MAX_SAFE_INTEGER;
+    e.state.inventory = Array.from({ length: 19 }, () => 'A');
+    advance(e, 100);
+    expect(e.state.phase).toBe('playing');
+    e.state.inventory.push('A', 'A', 'A', 'A', 'A', 'A');
+    advance(e, 100);
+    expect(e.state.phase).toBe('warp');
+    expect(e.state.forced).toBe(true);
+    advance(e, WARP_TIME + 100);
+    expect(e.state.phase).toBe('challenge');
+    // A forced entry cannot be skipped.
+    e.leaveChallenge();
+    expect(e.state.phase).toBe('challenge');
+  });
+  it('re-arms the forced gate only after the bag drains below 20', () => {
+    const e = make();
+    e.state.nextPortalAt = Number.MAX_SAFE_INTEGER;
+    e.state.inventory = Array.from({ length: 25 }, () => 'A');
+    playing(e);
+    advance(e, 100);
+    expect(e.state.phase).toBe('warp');
+    advance(e, WARP_TIME + 100);
+    e.state.phase = 'playing';
+    advance(e, 100);
+    expect(e.state.phase).toBe('playing');
+    e.state.inventory = ['A'];
+    advance(e, 100);
+    e.state.inventory = Array.from({ length: 25 }, () => 'A');
+    advance(e, 100);
+    expect(e.state.phase).toBe('warp');
+  });
+  it('leaves an open gate alone instead of forcing entry', () => {
+    const e = make();
+    playing(e);
+    e.state.portal = { x: 30, y: 3, expiresAt: 60_000 };
+    e.state.inventory = Array.from({ length: 25 }, () => 'A');
+    advance(e, 100);
+    expect(e.state.phase).toBe('playing');
+  });
+  it('freezes the world during the warp and lets the player leave a normal gate entry', () => {
+    const e = playing(make());
+    e.state.portal = { x: 9, y: 11, expiresAt: 60000 };
+    advance(e, 200);
+    expect(e.state.phase).toBe('warp');
+    const elapsed = e.state.elapsed;
+    advance(e, 500);
+    expect(e.state.elapsed).toBe(elapsed);
+    advance(e, WARP_TIME);
+    expect(e.state.phase).toBe('challenge');
+    e.leaveChallenge();
+    expect(e.state.phase).toBe('countdown');
+  });
+});
+describe('red bricks and the bag limit', () => {
+  const clearField = (e: GameEngine) => {
+    e.state.letters = [];
+    e.state.obstacles = [];
+    e.state.snake = [
+      { x: 8, y: 11 },
+      { x: 7, y: 11 },
+      { x: 6, y: 11 },
+      { x: 5, y: 11 },
+    ];
+    e.state.chest = null;
+  };
+  it('keeps five bricks on a regular board and none during the tutorial', () => {
+    expect(make().state.obstacles).toHaveLength(OBSTACLE_COUNT);
+    expect(new GameEngine({ ...DEFAULT_SETTINGS }, true).state.obstacles).toEqual([]);
+  });
+  it('never places a brick close to the snake head', () => {
+    const e = make();
+    for (const brick of e.state.obstacles) {
+      expect(
+        Math.abs(brick.x - e.state.snake[0].x) + Math.abs(brick.y - e.state.snake[0].y),
+      ).toBeGreaterThanOrEqual(8);
+    }
+  });
+  it('breaks on contact: -50 points, one random letter lost, and a replacement appears', () => {
+    const e = playing(make());
+    clearField(e);
+    e.state.score = 300;
+    e.state.inventory = ['C', 'A', 'T'];
+    e.state.obstacles = [{ id: 901, x: 9, y: 11, expiresAt: 40_000 }];
+    advance(e, 200);
+    expect(e.state.phase).toBe('playing');
+    expect(e.state.score).toBe(250);
+    expect(e.state.inventory).toHaveLength(2);
+    expect(e.state.toast).not.toBe('');
+    expect(e.state.obstacles.some((b) => b.id === 901)).toBe(false);
+    advance(e, 100);
+    expect(e.state.obstacles).toHaveLength(OBSTACLE_COUNT);
+  });
+  it('costs points even with an empty bag, never below zero', () => {
+    const e = playing(make());
+    clearField(e);
+    e.state.score = 20;
+    e.state.inventory = [];
+    e.state.obstacles = [{ id: 902, x: 9, y: 11, expiresAt: 40_000 }];
+    advance(e, 200);
+    expect(e.state.score).toBe(0);
+    expect(e.state.inventory).toEqual([]);
+  });
+  it('is fatal with zero points, opening the revive screen (or ending the run with no hearts)', () => {
+    const e = playing(make());
+    clearField(e);
+    e.state.score = 0;
+    e.state.obstacles = [{ id: 904, x: 9, y: 11, expiresAt: 40_000 }];
+    advance(e, 200);
+    expect(e.state.phase).toBe('revive');
+    expect(e.state.deathReason).not.toBe('');
+    expect(e.state.obstacles.some((b) => b.id === 904)).toBe(false);
+    const spent = playing(make());
+    clearField(spent);
+    spent.state.hearts = 0;
+    spent.state.score = 0;
+    spent.state.obstacles = [{ id: 905, x: 9, y: 11, expiresAt: 40_000 }];
+    advance(spent, 200);
+    expect(spent.state.phase).toBe('gameOver');
+  });
+  it('removes bricks after forty active seconds and refills the board', () => {
+    const e = make();
+    const ids = e.state.obstacles.map((b) => b.id);
+    e.state.phase = 'playing';
+    e.state.snake = [
+      { x: 8, y: 1 },
+      { x: 7, y: 1 },
+      { x: 6, y: 1 },
+      { x: 5, y: 1 },
+    ];
+    e.state.direction = 'left';
+    e.advance(100);
+    e.state.elapsed = OBSTACLE_LIFETIME;
+    e.advance(100);
+    expect(e.state.obstacles).toHaveLength(OBSTACLE_COUNT);
+    expect(e.state.obstacles.every((b) => !ids.includes(b.id))).toBe(true);
+  });
+  it('never lets the bag exceed 30 letters, from pickups or chests', () => {
+    const e = playing(make());
+    clearField(e);
+    e.state.inventory = Array.from({ length: MAX_LETTERS }, () => 'A');
+    e.state.letters = [{ id: 903, letter: 'Z', x: 9, y: 11, expiresAt: 30_000 }];
+    advance(e, 200);
+    expect(e.state.inventory).toHaveLength(MAX_LETTERS);
+    e.state.phase = 'chest';
+    e.state.inventory = Array.from({ length: 28 }, () => 'A');
+    e.state.reward = {
+      kind: 'red',
+      letters: ['B', 'B', 'B', 'B', 'B'],
+      elapsed: 0,
+      revealed: true,
+      opened: true,
+    };
+    expect(e.claimChest()).toBe(true);
+    expect(e.state.inventory).toHaveLength(MAX_LETTERS);
   });
 });
 describe('four chest tiers', () => {
@@ -249,13 +441,16 @@ describe('revival', () => {
     expect(e.state.phase).toBe('gameOver');
     expect(e.submitRevival('CAT')).toBe(false);
   });
-  it('retains inventory and resets to a safe snake when reviving', () => {
+  it('keeps the snake length but costs 100 points and five random letters when reviving', () => {
     const e = make();
-    e.state.inventory = ['A', 'P', 'P', 'L', 'E'];
+    e.state.inventory = ['A', 'P', 'P', 'L', 'E', 'S', 'T', 'O', 'N'];
+    e.state.score = 500;
     crash(e);
+    const length = e.state.snake.length;
     e.submitRevival(e.state.reviveWord!.word);
-    expect(e.state.inventory).toEqual(['A', 'P', 'P', 'L', 'E']);
-    expect(e.state.snake).toHaveLength(4);
+    expect(e.state.inventory).toHaveLength(4);
+    expect(e.state.score).toBe(400);
+    expect(e.state.snake).toHaveLength(length);
     expect(e.state.direction).toBe('right');
     expect(e.state.letters.some((p) => e.state.snake.some((q) => q.x === p.x && q.y === p.y))).toBe(
       false,
@@ -370,8 +565,21 @@ describe('beginner tutorial', () => {
     expect(e.submitWord('CAT')).toBe(true);
     expect(e.state.score).toBe(450);
     e.continueWord();
+    // Brick lesson: one scripted brick, C A T in the bag, hitting it costs 50 points and a letter.
     expect(e.state.lesson).toBe(6);
     expect(e.state.phase).toBe('lesson');
+    e.startLesson();
+    expect(e.state.phase).toBe('countdown');
+    expect(e.state.obstacles).toHaveLength(1);
+    expect(e.state.inventory).toEqual(['C', 'A', 'T']);
+    advance(e, 3000 + 2500);
+    expect(e.state.phase).toBe('lessonReview');
+    expect(e.state.score).toBe(400);
+    expect(e.state.inventory).toHaveLength(2);
+    e.continueLesson();
+    expect(e.state.lesson).toBe(7);
+    expect(e.state.phase).toBe('lesson');
+    expect(e.state.obstacles).toEqual([]);
     e.startLesson();
     expect(e.state.phase).toBe('tutorialDone');
     expect(e.state.hearts).toBe(3);

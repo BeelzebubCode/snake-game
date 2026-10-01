@@ -7,11 +7,13 @@ import TutorialReview from './components/TutorialReview';
 import { getLessons } from './game/tutorial';
 import { LanguageProvider, translator, useI18n } from './i18n';
 import SettingsPanel from './components/SettingsPanel';
+import JournalBook from './components/JournalBook';
 import { loadDictionary, missingLetters } from './data/vocabulary';
 import { GameEngine } from './game/engine';
 import PhaserBoard from './game/PhaserBoard';
+import { directionForKey, isPauseKey } from './game/input';
 import { DIRECTION_LABELS, SKINS, hex, mapFor } from './game/appearance';
-import { CHESTS } from './game/types';
+import { CHESTS, MAX_LETTERS } from './game/types';
 import type { ChestKind, Direction, GameState, Settings } from './game/types';
 import { audio } from './services/audio';
 import { loadSave, recordRound, writeSave } from './services/storage';
@@ -23,65 +25,7 @@ const clock = (ms: number) =>
     .toString()
     .padStart(2, '0');
 const kinds = Object.keys(CHESTS) as ChestKind[];
-function Brand({ onClick }: { onClick?: () => void }) {
-  const { t } = useI18n();
-  return (
-    <button className="brand" onClick={onClick} aria-label={t('home.brand')}>
-      <SnakeMark />
-      <span>
-        lexisnake<span className="brand-dot">.</span>
-        <small>{t('home.tagline')}</small>
-      </span>
-    </button>
-  );
-}
-function Library({ save, onClose }: { save: SaveData; onClose: () => void }) {
-  const { t } = useI18n();
-  const [search, setSearch] = useState('');
-  const entries = save.learned.filter((entry) =>
-    (entry.word + ' ' + entry.meaningTh).toLowerCase().includes(search.toLowerCase()),
-  );
-  return (
-    <Modal title={t('journal.title')} onClose={onClose} wide>
-      <p className="subtle">{t('journal.count', { count: save.learned.length })}</p>
-      <input
-        className="text-input library-search"
-        placeholder={t('journal.searchPlaceholder')}
-        aria-label={t('journal.search')}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      <div className="word-list">
-        {entries.length ? (
-          entries.map((entry) => (
-            <div className="word-entry" key={entry.word}>
-              <div>
-                <strong>{entry.word}</strong>
-                <p lang="th">{entry.meaningTh}</p>
-              </div>
-              <button
-                className="icon-button"
-                aria-label={t('common.listenPrefix') + entry.word}
-                onClick={() => audio.speak(entry.word)}
-              >
-                ♪
-              </button>
-            </div>
-          ))
-        ) : (
-          <div className="empty-state">
-            <span>❀</span>
-            <h3>{save.learned.length ? t('journal.noResults') : t('journal.emptyTitle')}</h3>
-            <p>
-              {' '}
-              {t('journal.emptyHint')} <br /> {t('journal.saveHint')}{' '}
-            </p>
-          </div>
-        )}
-      </div>
-    </Modal>
-  );
-}
+const MENU_TILES = ['L', 'E', 'X', 'I', 'W', 'O', 'R', 'D', 'S', 'A'];
 function Home({
   save,
   onPlay,
@@ -96,112 +40,105 @@ function Home({
   onLibrary: () => void;
 }) {
   const { t } = useI18n();
+  const hasPlayed = save.played > 0 || save.bestScore > 0 || save.learned.length > 0;
   return (
-    <div className="home">
-      <header className="home-header">
-        <Brand />
-        <nav aria-label={t('home.navigation')}>
-          <button onClick={onLibrary}>
-            <span aria-hidden="true">▤</span> {t('home.journal')}{' '}
-          </button>
-          <button onClick={onSettings}>
-            <span aria-hidden="true">☷</span> {t('common.settings')}{' '}
-          </button>
-        </nav>
-      </header>
-      <main className="home-main">
-        <section className="hero">
-          <div className="hero-copy">
-            <div className="eyebrow">
-              <span className="tiny-leaf">❧</span> {t('home.unlock')}{' '}
-            </div>
+    <div className="menu-screen">
+      <div className="menu-sky" aria-hidden="true">
+        {MENU_TILES.map((letter, i) => (
+          <span key={i} style={{ '--i': i } as CSSProperties}>
+            {letter}
+          </span>
+        ))}
+      </div>
+      <nav className="menu-corner" aria-label={t('home.navigation')}>
+        <button className="menu-tile journal" onClick={onLibrary}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5v-15Zm0 15A1.5 1.5 0 0 0 6.5 21H19v-3M9 7.5h6M9 11h6" />
+          </svg>
+          <span>{t('home.journal')}</span>
+        </button>
+        <button className="menu-tile settings" onClick={onSettings}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm7.4 5.1.1-1.6-.1-1.6 1.8-1.4-1.8-3.1-2.1.8a7.6 7.6 0 0 0-2.8-1.6L13.1 3h-3.6l-.4 2.1A7.6 7.6 0 0 0 6.3 6.7l-2.1-.8-1.8 3.1L4.2 10.4 4.1 12l.1 1.6-1.8 1.4 1.8 3.1 2.1-.8a7.6 7.6 0 0 0 2.8 1.6l.4 2.1h3.6l.4-2.1a7.6 7.6 0 0 0 2.8-1.6l2.1.8 1.8-3.1-1.8-1.4Z" />
+          </svg>
+          <span>{t('common.settings')}</span>
+        </button>
+      </nav>
+      <main className="menu-stage">
+        <section className="menu-panel">
+          <div className="menu-logo">
+            <SnakeMark />
             <h1>
-              {' '}
-              {t('home.headlineFirst')} <br /> {t('home.headlineSecond')}
-              <span className="green-text">{t('home.headlineAccent')}</span>
-              <span className="heading-flower" aria-hidden="true">
-                ✿
-              </span>
+              lexisnake<span className="brand-dot">.</span>
             </h1>
-            <p className="hero-description">
-              {' '}
-              {t('home.descriptionFirst')} <br className="desktop-break" />{' '}
-              {t('home.descriptionSecond')}{' '}
-            </p>
-            <div className="hero-actions">
-              <button className="button primary play-button" onClick={onPlay}>
-                {' '}
-                {t('home.play')} <span aria-hidden="true">↗</span>
-              </button>
-              <button className="text-button" onClick={onTutorial}>
-                {' '}
-                {t('home.tutorial')} <span aria-hidden="true">→</span>
-              </button>
-            </div>
-            <div className="hero-note">
-              <span aria-hidden="true">♡</span> {t('home.note')}{' '}
-            </div>
+            <p>{t('home.tagline')}</p>
           </div>
-          <div className="hero-illustration">
-            <div className="illustration-halo" />
-            <GardenArt />
-            <div className="floating-note">
-              <span>✦</span>
-              <div>
-                <strong>{t('home.floatingTitle')}</strong>
-                <small>{t('home.floatingDetail')}</small>
-              </div>
-            </div>
-            <span className="art-caption">{t('home.artCaption')}</span>
+          <div className="menu-buttons">
+            <button className="menu-play" onClick={onPlay}>
+              <span>{t('home.play')}</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 4.5v15l13-7.5-13-7.5Z" />
+              </svg>
+            </button>
+            <button className="menu-secondary" onClick={onTutorial}>
+              <span>{t('home.tutorial')}</span>
+              <span aria-hidden="true">→</span>
+            </button>
           </div>
+          <ul className="menu-tips">
+            <li>
+              <span aria-hidden="true">✦</span> {t('home.unlock')}
+            </li>
+            <li>
+              <span aria-hidden="true">♡</span> {t('home.note')}
+            </li>
+          </ul>
         </section>
-        <section className="home-bottom" aria-label={t('home.progressLabel')}>
-          <div className="progress-summary">
-            <span className="eyebrow">{t('home.progressEyebrow')}</span>
-            <h2>{t('home.progressTitle')}</h2>
-            <div className="home-stats">
-              <div>
-                <strong>{format(save.bestScore)}</strong>
-                <span>{t('common.highScore')}</span>
-              </div>
-              <div>
-                <strong>{save.learned.length}</strong>
-                <span>{t('common.wordsFound')}</span>
-              </div>
-              <div>
-                <strong>{save.played}</strong>
-                <span>{t('common.runs')}</span>
-              </div>
-            </div>
-          </div>
-          <div className="treasure-guide">
-            <div className="treasure-heading">
-              <span className="eyebrow">{t('home.lootEyebrow')}</span>
-              <span className="subtle">{t('home.lootHint')}</span>
-            </div>
-            <div className="chest-guide-grid">
-              {kinds.map((kind) => (
-                <div className={'chest-guide ' + kind} key={kind}>
-                  <ChestArt kind={kind} />
-                  <span>{t(CHESTS[kind].title)}</span>
-                  <strong>
-                    +{CHESTS[kind].count} <small>{t('common.letters')}</small>
-                  </strong>
-                </div>
-              ))}
-            </div>
-          </div>
+        <section className="menu-art" aria-hidden="true">
+          <div className="illustration-halo" />
+          <GardenArt />
+          <span className="art-caption">{t('home.artCaption')}</span>
         </section>
       </main>
-      <footer className="home-footer">
-        <span>
-          LEXISNAKE <span className="footer-separator">/</span> {t('home.tagline')}
-        </span>
-        <span>
-          {' '}
-          {t('home.footer')} <span aria-hidden="true">❧</span>
-        </span>
-      </footer>
+      {hasPlayed && (
+        <section className="menu-score" aria-label={t('home.progressTitle')}>
+          <div className="menu-score-title">
+            <span className="eyebrow">{t('home.progressEyebrow')}</span>
+            <strong>{t('home.progressTitle')}</strong>
+          </div>
+          <div className="home-stats">
+            <div>
+              <strong>{format(save.bestScore)}</strong>
+              <span>{t('common.highScore')}</span>
+            </div>
+            <div>
+              <strong>{save.learned.length}</strong>
+              <span>{t('common.wordsFound')}</span>
+            </div>
+            <div>
+              <strong>{save.played}</strong>
+              <span>{t('common.runs')}</span>
+            </div>
+          </div>
+        </section>
+      )}
+      <section className="loot-bar" aria-label={t('home.progressLabel')}>
+        <div className="loot-title">
+          <span className="eyebrow">{t('home.lootEyebrow')}</span>
+          <span className="subtle">{t('home.lootHint')}</span>
+        </div>
+        <div className="loot-slots">
+          {kinds.map((kind) => (
+            <div className={'loot-slot ' + kind} key={kind}>
+              <ChestArt kind={kind} />
+              <span>{t(CHESTS[kind].title)}</span>
+              <strong>
+                +{CHESTS[kind].count} <small>{t('common.letters')}</small>
+              </strong>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -261,21 +198,12 @@ function GameScreen({
       setRevivalDraft('');
     previousPhase.current = s.phase;
   }, [s.phase, s]);
+  const musicOn = soundEnabled && !['paused', 'gameOver', 'tutorialDone'].includes(s.phase);
   useEffect(() => {
-    const directions: Record<string, Direction> = {
-      ArrowUp: 'up',
-      ArrowDown: 'down',
-      ArrowLeft: 'left',
-      ArrowRight: 'right',
-      w: 'up',
-      W: 'up',
-      s: 'down',
-      S: 'down',
-      a: 'left',
-      A: 'left',
-      d: 'right',
-      D: 'right',
-    };
+    audio.setMusic(musicOn);
+  }, [musicOn]);
+  useEffect(() => () => audio.setMusic(false), []);
+  useEffect(() => {
     const down = (event: KeyboardEvent) => {
       if (
         event.target instanceof HTMLElement &&
@@ -283,19 +211,17 @@ function GameScreen({
       )
         return;
       const phase = engine.state.phase;
-      if (
-        (event.key === 'Escape' || event.key.toLowerCase() === 'p') &&
-        ['playing', 'countdown'].includes(phase)
-      ) {
+      if (isPauseKey(event) && ['playing', 'countdown'].includes(phase)) {
         event.preventDefault();
         engine.pause();
         audio.stop();
         return;
       }
       if (!['playing', 'countdown'].includes(phase)) return;
-      if (directions[event.key]) {
+      const direction = directionForKey(event);
+      if (direction) {
         event.preventDefault();
-        if (!event.repeat) engine.turn(directions[event.key]);
+        if (!event.repeat) engine.turn(direction);
       }
       if (event.code === 'Space' || event.key === 'Shift') {
         event.preventDefault();
@@ -365,12 +291,16 @@ function GameScreen({
     engine.submitWord(draft);
   };
   const phase = s.phase;
-  const reviewingBag = phase === 'lessonReview' && [2, 3].includes(s.lesson);
+  const reviewingBag = phase === 'lessonReview' && [2, 3, 6].includes(s.lesson);
   const currentMap = mapFor(s.mapStage, s.settings.map);
   const directionPreview = DIRECTION_LABELS[s.nextDirection];
   return (
     <div
-      className={'game-screen' + (phase === 'lessonReview' ? ' reviewing-lesson' : '')}
+      className={
+        'game-screen' +
+        (phase === 'lessonReview' ? ' reviewing-lesson' : '') +
+        (phase === 'warp' ? ' warping' : '')
+      }
       ref={playRef}
       data-map={currentMap.id}
       style={
@@ -449,38 +379,52 @@ function GameScreen({
           </button>
         </div>
       </header>
-      {s.tutorial && ['playing', 'countdown'].includes(phase) && (
-        <aside className="tutorial-task" aria-label={t('tutorial.objective')}>
-          <span className="tutorial-task-step">
-            {s.lesson + 1} / {LESSONS.length}
-          </span>
-          <div className="tutorial-objective">
-            <p>{LESSONS[s.lesson].task}</p>
-            {s.lesson === 0 && (
-              <ol className="steering-checklist" aria-label={t('tutorial.directionsLabel')}>
-                {(['up', 'left', 'down', 'right'] as Direction[]).map((direction, index) => (
-                  <li
-                    key={direction}
-                    className={s.practicedDirections.includes(direction) ? 'done' : ''}
-                    aria-current={s.practicedDirections.length === index ? 'step' : undefined}
-                  >
-                    {s.practicedDirections.includes(direction)
-                      ? '✓'
-                      : ['W ↑', 'A ←', 'S ↓', 'D →'][index]}{' '}
-                    {t(DIRECTION_LABELS[direction].name)}
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-          <button className="text-button" onClick={() => engine.showLesson()}>
-            {' '}
-            {t('tutorial.instructions')}{' '}
-          </button>
-        </aside>
-      )}
       <main className="game-field" aria-label={t('game.board')} tabIndex={-1}>
         <PhaserBoard engine={engine} />
+        {s.tutorial && ['playing', 'countdown'].includes(phase) && (
+          <aside className="tutorial-task" aria-label={t('tutorial.objective')}>
+            <span className="tutorial-task-step">
+              {s.lesson + 1} / {LESSONS.length}
+            </span>
+            <div className="tutorial-objective">
+              <p>{LESSONS[s.lesson].task}</p>
+              {s.lesson === 0 && (
+                <ol className="steering-checklist" aria-label={t('tutorial.directionsLabel')}>
+                  {(['up', 'left', 'down', 'right'] as Direction[]).map((direction, index) => (
+                    <li
+                      key={direction}
+                      className={s.practicedDirections.includes(direction) ? 'done' : ''}
+                      aria-current={s.practicedDirections.length === index ? 'step' : undefined}
+                    >
+                      {s.practicedDirections.includes(direction)
+                        ? '✓'
+                        : ['W ↑', 'A ←', 'S ↓', 'D →'][index]}{' '}
+                      {t(DIRECTION_LABELS[direction].name)}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+            <button className="text-button" onClick={() => engine.showLesson()}>
+              {' '}
+              {t('tutorial.instructions')}{' '}
+            </button>
+          </aside>
+        )}
+        {phase === 'lessonReview' && (
+          <TutorialReview step={s.lesson} onContinue={() => engine.continueLesson()} />
+        )}
+        {s.toast && phase === 'playing' && (
+          <div className="toast" role="status" key={s.toast + s.toastUntil}>
+            {s.toast}
+          </div>
+        )}
+        {phase === 'warp' && (
+          <div className={'warp-overlay' + (s.forced ? ' forced' : '')} role="status">
+            <div className="warp-ring" aria-hidden="true" />
+            <strong>{s.forced ? t('warp.forced') : t('warp.enter')}</strong>
+          </div>
+        )}
         {phase === 'countdown' && (
           <div className="countdown-overlay">
             <div className="countdown-card">
@@ -512,8 +456,10 @@ function GameScreen({
       >
         <div className="tray-label">
           <span>{t('game.inventory')}</span>
-          <strong>
-            {s.inventory.length} <small>{t('common.items', { count: s.inventory.length })}</small>
+          <strong className={s.inventory.length >= 20 ? 'bag-heavy' : ''}>
+            {s.inventory.length}
+            {!s.tutorial && <span className="bag-cap">/{MAX_LETTERS}</span>}{' '}
+            <small>{t('common.items', { count: s.inventory.length })}</small>
           </strong>
         </div>
         <div className="inventory-strip" aria-label={t('game.collectedLetters')}>
@@ -522,7 +468,9 @@ function GameScreen({
               <span
                 className={
                   'letter-tile small' +
-                  (reviewingBag && (s.lesson === 2 || i > 0) ? ' tutorial-new-letter' : '')
+                  (reviewingBag && s.lesson !== 6 && (s.lesson === 2 || i > 0)
+                    ? ' tutorial-new-letter'
+                    : '')
                 }
                 key={i}
               >
@@ -543,13 +491,10 @@ function GameScreen({
           </span>
         </div>
       </footer>
-      {phase === 'lessonReview' && (
-        <TutorialReview step={s.lesson} onContinue={() => engine.continueLesson()} />
-      )}
       <div
         className="touch-controls"
         aria-label={t('controls.touch')}
-        hidden={phase === 'lessonReview'}
+        data-ghost={phase === 'lessonReview'}
       >
         <div className="dpad">
           <button
@@ -739,7 +684,7 @@ function GameScreen({
               {' '}
               {t('common.pause')}{' '}
             </button>
-            {!s.tutorial && (
+            {!s.tutorial && !s.forced && (
               <button className="text-button" onClick={() => engine.leaveChallenge()}>
                 {' '}
                 {t('portal.leave')}{' '}
@@ -1019,9 +964,23 @@ export default function App() {
   }, []);
   useEffect(() => {
     audio.enabled = save.settings.sound;
-    if (!audio.enabled) audio.stop();
+    if (!audio.enabled) {
+      audio.stop();
+      audio.setMusic(false);
+    }
     setSaveFailed(!writeSave(save));
   }, [save]);
+  useEffect(() => {
+    const click = (event: MouseEvent) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest('button:not(:disabled):not([data-silent])')
+      )
+        audio.play('click');
+    };
+    document.addEventListener('click', click);
+    return () => document.removeEventListener('click', click);
+  }, []);
   useEffect(() => {
     const media = matchMedia('(prefers-reduced-motion: reduce)');
     const update = () =>
@@ -1148,7 +1107,7 @@ export default function App() {
           }}
         />
       )}
-      {modal === 'library' && <Library save={save} onClose={() => setModal(null)} />}
+      {modal === 'library' && <JournalBook save={save} onClose={() => setModal(null)} />}
     </LanguageProvider>
   );
 }

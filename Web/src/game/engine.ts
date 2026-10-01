@@ -13,11 +13,21 @@ import {
   CHESTS,
   COLS,
   DEFAULT_SETTINGS,
+  FORCED_GATE_MIN,
+  FORCED_GATE_SPREAD,
   LETTER_COUNT,
   LETTER_LIFETIME,
+  MAX_LETTERS,
+  OBSTACLE_COUNT,
+  OBSTACLE_LIFETIME,
+  OBSTACLE_SCORE_PENALTY,
+  REVIVE_LETTER_LOSS,
+  REVIVE_PENALTY,
   REVIVE_TIME,
   ROWS,
   SPEEDS,
+  TIMEOUT_PENALTY,
+  WARP_TIME,
 } from './types';
 import { MAP_SCORE_STEP } from './appearance';
 import type { Cell, ChestKind, Direction, GameState, Phase, Settings } from './types';
@@ -29,7 +39,19 @@ const vectors: Record<Direction, Cell> = {
   right: { x: 1, y: 0 },
 };
 const same = (a: Cell, b: Cell) => a.x === b.x && a.y === b.y;
-export type GameSound = 'collect' | 'portal' | 'success' | 'wrong' | 'chest' | 'revive' | 'death';
+export type GameSound =
+  | 'collect'
+  | 'portal'
+  | 'success'
+  | 'wrong'
+  | 'chest'
+  | 'revive'
+  | 'death'
+  | 'timeout'
+  | 'click'
+  | 'warp'
+  | 'smash'
+  | 'page';
 export class GameEngine {
   state: GameState;
   private snapshot: GameState;
@@ -44,6 +66,8 @@ export class GameEngine {
   private boosted = false;
   private tutorialBoostMoves = 0;
   private tutorialDirectionMoves = 0;
+  private gateArmed = true;
+  private gateThreshold = 0;
   constructor(
     settings: Settings = DEFAULT_SETTINGS,
     tutorial = false,
@@ -66,6 +90,7 @@ export class GameEngine {
       letters: [],
       chest: null,
       portal: null,
+      obstacles: [],
       inventory: tutorial ? [] : ['C', 'A', 'T'],
       score: 0,
       hearts: 3,
@@ -74,6 +99,10 @@ export class GameEngine {
       nextChestAt: 7_000,
       countdown: 3000,
       challengeRemaining: settings.portalSeconds * 1000,
+      warpRemaining: 0,
+      forced: false,
+      toast: '',
+      toastUntil: 0,
       reviveRemaining: REVIVE_TIME,
       reviveWord: null,
       reward: null,
@@ -87,14 +116,29 @@ export class GameEngine {
       deathReason: '',
       sessionId: Math.random().toString(36).slice(2) + Date.now().toString(36),
     };
-    if (!tutorial) this.fillLetters();
+    if (!tutorial) {
+      this.fillLetters();
+      this.fillObstacles();
+    }
     this.snapshot = structuredClone(this.state);
   }
   private t(key: MessageKey, params?: Params) {
     return translate(this.state.settings.language, key, params);
   }
   private startSnake(): Cell[] {
-    return [0, 1, 2, 3].map((i) => ({ x: 8 - i, y: 11 }));
+    return this.makeSnake(4);
+  }
+  // Lays a snake of any length out safely: a straight row heading right, with long bodies folding
+  // back along the row beneath so the head always has open space ahead.
+  private makeSnake(length: number): Cell[] {
+    const headX = Math.max(8, Math.min(COLS - 10, length + 1));
+    return Array.from({ length }, (_, i) =>
+      i < headX ? { x: headX - i, y: 11 } : { x: i - headX + 1, y: 12 },
+    );
+  }
+  private toast(text: string, duration = 2600) {
+    this.state.toast = text;
+    this.state.toastUntil = this.state.elapsed + duration;
   }
   getSnapshot = () => this.snapshot;
   subscribe = (callback: () => void) => {
@@ -170,11 +214,23 @@ export class GameEngine {
         if (s.portal && s.portal.expiresAt <= s.elapsed) s.portal = null;
         if (!s.chest && s.elapsed >= s.nextChestAt) this.spawnChest();
         if (!s.portal && s.elapsed >= s.nextPortalAt) this.spawnPortal();
+        s.obstacles = s.obstacles.filter((brick) => brick.expiresAt > s.elapsed);
+        this.fillObstacles();
+        if (s.toast && s.elapsed >= s.toastUntil) s.toast = '';
+        this.checkFullBag();
       }
       this.moveAccumulator += dt;
       while (this.moveAccumulator >= this.interval && s.phase === 'playing') {
         this.moveAccumulator -= this.interval;
         this.step();
+      }
+    } else if (s.phase === 'warp') {
+      s.warpRemaining = Math.max(0, s.warpRemaining - dt);
+      if (!s.warpRemaining) {
+        s.phase = 'challenge';
+        s.challengeRemaining = s.settings.portalSeconds * 1000;
+        s.error = '';
+        this.publish();
       }
     } else if (s.phase === 'challenge') {
       s.challengeRemaining = Math.max(0, s.challengeRemaining - dt);
@@ -184,6 +240,8 @@ export class GameEngine {
           s.error = this.t('engine.practiceTimeout');
         } else {
           if (s.snake.length > 3) s.snake.pop();
+          s.score = Math.max(0, s.score - TIMEOUT_PENALTY);
+          this.sound('timeout');
           s.previousSnake = s.snake.map((p) => ({ ...p }));
           s.notice = this.t('engine.wordTimeout');
           this.beginCountdown();
@@ -210,16 +268,26 @@ export class GameEngine {
       this.publish();
     }
   }
-  private freeCell(exclude: Cell[] = []): Cell | null {
+  private freeCell(
+    exclude: Cell[] = [],
+    accept: (cell: Cell) => boolean = () => true,
+  ): Cell | null {
     const s = this.state;
-    const occupied = [...s.snake, ...s.letters, ...(s.chest ? [s.chest] : []), ...exclude];
+    const occupied = [
+      ...s.snake,
+      ...s.letters,
+      ...s.obstacles,
+      ...(s.chest ? [s.chest] : []),
+      ...exclude,
+    ];
     if (s.portal)
       for (let x = 0; x < 2; x++)
         for (let y = 0; y < 2; y++) occupied.push({ x: s.portal.x + x, y: s.portal.y + y });
     const taken = new Set(occupied.map((p) => p.y * COLS + p.x));
     const available: Cell[] = [];
     for (let y = 1; y < ROWS - 1; y++)
-      for (let x = 1; x < COLS - 1; x++) if (!taken.has(y * COLS + x)) available.push({ x, y });
+      for (let x = 1; x < COLS - 1; x++)
+        if (!taken.has(y * COLS + x) && accept({ x, y })) available.push({ x, y });
     return available.length
       ? available[Math.min(available.length - 1, Math.floor(this.random() * available.length))]
       : null;
@@ -240,6 +308,29 @@ export class GameEngine {
         expiresAt: this.state.elapsed + LETTER_LIFETIME,
       });
     }
+  }
+  // Bricks never appear close to the head, so a new one is always visible before you can reach it.
+  private fillObstacles() {
+    const s = this.state;
+    if (s.tutorial) return;
+    while (s.obstacles.length < OBSTACLE_COUNT) {
+      const head = s.snake[0];
+      const cell = this.freeCell(
+        [],
+        (c) => Math.abs(c.x - head.x) + Math.abs(c.y - head.y) >= 8 && c.y > 0 && c.y < ROWS - 1,
+      );
+      if (!cell) return;
+      s.obstacles.push({ ...cell, id: ++this.id, expiresAt: s.elapsed + OBSTACLE_LIFETIME });
+    }
+  }
+  private dropLetters(count: number): string[] {
+    const inventory = this.state.inventory,
+      lost: string[] = [];
+    while (lost.length < count && inventory.length) {
+      const index = Math.min(inventory.length - 1, Math.floor(this.random() * inventory.length));
+      lost.push(...inventory.splice(index, 1));
+    }
+    return lost;
   }
   private spawnChest() {
     const cell = this.freeCell();
@@ -272,7 +363,9 @@ export class GameEngine {
       ];
       if (
         !cells.some((cell) =>
-          [...s.snake, ...s.letters, ...(s.chest ? [s.chest] : [])].some((p) => same(p, cell)),
+          [...s.snake, ...s.letters, ...s.obstacles, ...(s.chest ? [s.chest] : [])].some((p) =>
+            same(p, cell),
+          ),
         )
       ) {
         s.portal = { x, y, expiresAt: s.elapsed + 60_000 };
@@ -281,6 +374,37 @@ export class GameEngine {
         return;
       }
     }
+  }
+  // An inventory holding 20-25 letters (random per fill) with no gate on the board pulls the player into
+  // one automatically. It re-arms once the inventory drains below 20.
+  private checkFullBag() {
+    const s = this.state,
+      count = s.inventory.length;
+    if (count < FORCED_GATE_MIN) {
+      this.gateArmed = true;
+      this.gateThreshold = 0;
+      return;
+    }
+    if (!this.gateArmed) return;
+    this.gateThreshold ||= FORCED_GATE_MIN + Math.floor(this.random() * FORCED_GATE_SPREAD);
+    if (count < this.gateThreshold) return;
+    this.gateArmed = false;
+    this.gateThreshold = 0;
+    if (!s.portal) this.beginWarp(true);
+  }
+  private beginWarp(forced: boolean) {
+    const s = this.state;
+    s.phase = 'warp';
+    s.warpRemaining = s.settings.reducedMotion ? 600 : WARP_TIME;
+    s.forced = forced;
+    s.portal = null;
+    s.nextPortalAt = s.elapsed + 30_000;
+    s.error = '';
+    s.toast = '';
+    this.queued = [];
+    this.boosted = false;
+    this.sound('warp');
+    this.publish();
   }
   private step() {
     const s = this.state;
@@ -308,14 +432,41 @@ export class GameEngine {
     s.snake.unshift(head);
     if (!pickup) s.snake.pop();
     else {
-      s.inventory.push(pickup.letter);
       s.letters = s.letters.filter((item) => item.id !== pickup.id);
       this.fillLetters();
-      this.sound('collect');
+      if (s.inventory.length >= MAX_LETTERS) {
+        this.toast(this.t('engine.bagFull', { max: MAX_LETTERS }));
+        this.sound('wrong');
+      } else {
+        s.inventory.push(pickup.letter);
+        this.sound('collect');
+      }
       if (s.tutorial && s.lesson === 2) {
         this.finishPractice();
         return;
       }
+    }
+    const brick = s.obstacles.find((item) => same(item, head));
+    if (brick) {
+      s.obstacles = s.obstacles.filter((item) => item.id !== brick.id);
+      // With no points left to pay the penalty, the brick is fatal and goes to the revive screen.
+      if (!s.tutorial && s.score <= 0) {
+        this.die(this.t('engine.hitBrick'));
+        return;
+      }
+      s.score = Math.max(0, s.score - OBSTACLE_SCORE_PENALTY);
+      const [lost] = this.dropLetters(1);
+      this.toast(
+        lost
+          ? this.t('engine.brickHit', { points: OBSTACLE_SCORE_PENALTY, letter: lost })
+          : this.t('engine.brickHitEmpty', { points: OBSTACLE_SCORE_PENALTY }),
+      );
+      this.sound('smash');
+      if (s.tutorial && s.lesson === 6) {
+        this.finishPractice();
+        return;
+      }
+      this.publish();
     }
     if (s.tutorial && s.lesson === 0) {
       const target = (['up', 'left', 'down', 'right'] as Direction[])[s.practicedDirections.length];
@@ -361,6 +512,10 @@ export class GameEngine {
       head.y >= s.portal.y &&
       head.y < s.portal.y + 2
     ) {
+      if (!s.tutorial) {
+        this.beginWarp(false);
+        return;
+      }
       s.phase = 'challenge';
       s.challengeRemaining = s.settings.portalSeconds * 1000;
       s.portal = null;
@@ -369,11 +524,7 @@ export class GameEngine {
       this.queued = [];
       this.boosted = false;
       this.sound('portal');
-      if (s.tutorial) {
-        this.nextLesson();
-        return;
-      }
-      this.publish();
+      this.nextLesson();
     }
   }
   private finishPractice() {
@@ -403,6 +554,7 @@ export class GameEngine {
     s.letters = [];
     s.chest = null;
     s.portal = null;
+    s.obstacles = [];
     s.previousSnake = s.snake.map((p) => ({ ...p }));
     this.queued = [];
     this.boosted = false;
@@ -429,6 +581,11 @@ export class GameEngine {
     if (s.lesson === 3)
       s.chest = { id: ++this.id, kind: 'silver', x: 18, y: 11, expiresAt: Number.MAX_SAFE_INTEGER };
     if (s.lesson === 4) s.portal = { x: 12, y: 10, expiresAt: Number.MAX_SAFE_INTEGER };
+    s.obstacles = [];
+    if (s.lesson === 6) {
+      s.obstacles = [{ id: ++this.id, x: 18, y: 11, expiresAt: Number.MAX_SAFE_INTEGER }];
+      s.inventory = ['C', 'A', 'T'];
+    }
   }
   showLesson() {
     const s = this.state;
@@ -447,7 +604,7 @@ export class GameEngine {
       this.lessonReturn = null;
       if (target === 'challenge') s.phase = target;
       else this.beginCountdown();
-    } else if (s.lesson === 6) s.phase = 'tutorialDone';
+    } else if (s.lesson === 7) s.phase = 'tutorialDone';
     else if (s.lesson === 5) {
       s.phase = 'challenge';
       s.challengeRemaining = s.settings.portalSeconds * 1000;
@@ -473,6 +630,8 @@ export class GameEngine {
     else if (!canBuild(word, s.inventory)) error = this.t('engine.missingLetters');
     else if (s.tutorial && word !== 'CAT') error = this.t('engine.tutorialWord');
     else if (!entry) error = this.t('engine.unknownWord');
+    else if (!s.tutorial && s.words.some((w) => w.entry.word === entry.word))
+      error = this.t('engine.duplicateWord');
     else if (!s.tutorial && !matchesLevel(entry.level, s.settings.level))
       error = this.t('engine.levelMismatch');
     if (error) {
@@ -505,7 +664,7 @@ export class GameEngine {
     return entry?.word ?? '';
   }
   leaveChallenge() {
-    if (this.state.phase !== 'challenge' || this.state.tutorial) return;
+    if (this.state.phase !== 'challenge' || this.state.tutorial || this.state.forced) return;
     this.state.notice = this.t('engine.leavePortal');
     this.beginCountdown();
     this.publish();
@@ -521,11 +680,20 @@ export class GameEngine {
   claimChest() {
     const s = this.state;
     if (s.phase !== 'chest' || !s.reward?.opened || !s.reward.revealed) return false;
-    s.inventory.push(...s.reward.letters);
-    s.notice = this.t('engine.lootAdded', {
-      chest: this.t(CHESTS[s.reward.kind].title),
-      count: s.reward.letters.length,
-    });
+    const room = Math.max(0, MAX_LETTERS - s.inventory.length),
+      added = s.reward.letters.slice(0, room);
+    s.inventory.push(...added);
+    s.notice =
+      added.length < s.reward.letters.length
+        ? this.t('engine.lootCapped', {
+            chest: this.t(CHESTS[s.reward.kind].title),
+            count: added.length,
+            max: MAX_LETTERS,
+          })
+        : this.t('engine.lootAdded', {
+            chest: this.t(CHESTS[s.reward.kind].title),
+            count: added.length,
+          });
     s.reward = null;
     if (s.tutorial) {
       this.finishPractice();
@@ -571,19 +739,26 @@ export class GameEngine {
       return false;
     }
     s.hearts -= 1;
-    s.score = Math.max(0, s.score - 100);
-    s.snake = this.startSnake();
+    s.score = Math.max(0, s.score - REVIVE_PENALTY);
+    // The body keeps its length; the price is points and part of the inventory instead.
+    s.snake = this.makeSnake(s.snake.length);
     s.previousSnake = s.snake.map((p) => ({ ...p }));
     s.direction = 'right';
     s.letters = s.letters.filter((p) => !s.snake.some((q) => same(p, q)));
+    s.obstacles = s.obstacles.filter((p) => !s.snake.some((q) => same(p, q)));
     s.chest = null;
     s.portal = null;
     s.nextPortalAt = s.elapsed + 10_000;
     s.nextChestAt = s.elapsed + 12_000;
+    const lost = this.dropLetters(REVIVE_LETTER_LOSS);
     this.fillLetters();
+    this.fillObstacles();
     s.reviveWord = null;
     s.error = '';
-    s.notice = this.t('engine.revived');
+    s.notice = this.t('engine.revived', {
+      points: REVIVE_PENALTY,
+      lost: lost.length,
+    });
     this.sound('revive');
     this.beginCountdown();
     this.publish();

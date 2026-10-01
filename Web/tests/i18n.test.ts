@@ -51,9 +51,10 @@ describe('English and Thai localization', () => {
       expect(e.submitRevival('DOG')).toBe(false);
       expect(e.state.error).toBe(translate(language, 'engine.reviveWrong'));
       const lessons = getLessons(language);
-      expect(lessons).toHaveLength(7);
+      expect(lessons).toHaveLength(8);
       expect(lessons[0].title).toBe(translate(language, 'lesson.steer.title'));
-      expect(lessons[6].action).toBe(translate(language, 'lesson.hearts.action'));
+      expect(lessons[6].action).toBe(translate(language, 'lesson.brick.action'));
+      expect(lessons[7].action).toBe(translate(language, 'lesson.hearts.action'));
     },
   );
 });

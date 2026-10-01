@@ -94,7 +94,7 @@ export const en = {
   'word.pronounce': '♪ Listen',
   'word.speechUnavailable': 'Speech is unavailable on this device.',
   'word.continue': 'Continue Run',
-  'word.tutorialContinue': 'Learn the Run Rules',
+  'word.tutorialContinue': 'Try the Red Brick',
   'word.success': 'Word Complete!',
   'common.letterLabel': 'letters',
   'chest.rollingLabel': 'Rolling for letters',
@@ -115,7 +115,7 @@ export const en = {
   'revive.inputLabel': 'Revive answer',
   'revive.placeholder': 'Enter the English word',
   'revive.heartCost': '♥ Costs 1 heart',
-  'revive.scoreCost': '−100 points · Minimum score: 0',
+  'revive.scoreCost': '−100 points · lose 5 random letters',
   'revive.submit': 'Revive →',
   'revive.end': 'End Run',
   'revive.title': 'Revive?',
@@ -254,7 +254,7 @@ export const en = {
   'lesson.collect.explain':
     'Collecting it grows your snake and adds C to the Inventory below the board. The game will pause and highlight it for you.',
   'lesson.collect.spawns':
-    'Regular runs have 3 letters on the board. Each disappears after 30 seconds and is replaced.',
+    'Regular runs have 3 letters on the board. Each one fades from the top down over 30 seconds, then is replaced. When it is fully faded, it is gone.',
   'lesson.collect.task': 'Move right to collect C, then check your inventory below.',
   'lesson.collect.action': 'Collect C',
   'lesson.collect.tip':
@@ -285,7 +285,7 @@ export const en = {
   'lesson.word.tools':
     'Backspace removes the last letter. You can also use Delete Last, Clear, or Hint.',
   'lesson.word.timer':
-    'The default time limit is 1 minute, adjustable in Settings. Running out of time removes one tail segment but keeps your letters.',
+    'The default time limit is 1 minute, adjustable in Settings. Running out of time costs 100 points and one tail segment, but your letters stay. You cannot reuse a word you already answered in the same run.',
   'lesson.word.task': 'Build CAT, then press Enter or Submit Word.',
   'lesson.word.action': 'Build a Word',
   'lesson.word.tip':
@@ -294,7 +294,44 @@ export const en = {
   'lesson.hearts.summary': 'You are ready! Here are the rules for a regular run.',
   'lesson.hearts.pause': 'Press P or Esc to pause. Avoid the edges of the board and your own body.',
   'lesson.hearts.revive':
-    'You have 3 hearts. After a crash, spell the English word for the Thai meaning within 30 seconds. A correct answer costs 1 heart and 100 points, with a minimum score of 0.',
+    'You have 3 hearts. After a crash, spell the English word for the Thai meaning within 30 seconds. A correct answer costs 1 heart, 100 points (minimum 0), and 5 random letters from your inventory — but your snake keeps its length.',
+  'lesson.hearts.bag':
+    'Your inventory holds at most 30 letters. When it reaches 20–25 letters and no gate is open, a gate pulls you in automatically — a great moment to spend your letters!',
+  'lesson.brick.title': 'Watch Out for Red Bricks',
+  'lesson.brick.summary':
+    'Red brick boxes are scattered across the board. Bump into one to see what happens.',
+  'lesson.brick.explain':
+    'A brick breaks, costs you 50 points, and knocks one random letter out of your inventory. A new brick appears somewhere else. Careful: if you have 0 points, a brick ends your run like a crash, so you go to the Revive screen.',
+  'lesson.brick.fade':
+    'Regular runs keep 5 bricks on the board. Like letters, each brick fades from the top down as its time runs out, then reappears somewhere new.',
+  'lesson.brick.task': 'Move right and bump into the red brick.',
+  'lesson.brick.action': 'Bump the Brick',
+  'lesson.brick.tip':
+    'You start this lesson with C A T in your inventory. Watch your score and your inventory after the hit.',
+  'review.brickTitle': 'Brick Hit: −50 Points and One Letter',
+  'review.brickText':
+    'The brick broke, 50 points were removed, and one random letter left your inventory. In a real run, steer around bricks when you can — every letter is a chance to build a word.',
+  'review.brickNext': 'Got It — Read the Rules',
+  'tutorial.brickPicture': 'A fading red brick box costing 50 points and a letter',
+  'tutorial.fadePicture': 'Fades from the top',
+  'engine.brickHit': 'Brick! −{points} points and you lost the letter {letter}.',
+  'journal.latest': 'Latest discovery',
+  'journal.prev': 'Previous page',
+  'journal.next': 'Next page',
+  'journal.pageOne': 'Page {page} of {total}',
+  'journal.pageTwo': 'Pages {from}–{to} of {total}',
+  'journal.entryNo': 'No. {n}',
+  'journal.seals': 'Collector seals',
+  'journal.sealAria': 'Seal for {n} words',
+  'journal.nextSeal': '{remaining} more words for your next seal',
+  'journal.allSeals': 'Every seal collected!',
+  'engine.hitBrick': 'You hit a red brick with no points left',
+  'engine.brickHitEmpty': 'Brick! −{points} points.',
+  'engine.bagFull': 'Your inventory is full ({max} letters)! That letter was lost.',
+  'engine.lootCapped': '{chest}: only +{count} letters fit — your inventory holds {max} at most.',
+  'warp.enter': 'Entering the gate…',
+  'warp.forced': 'Your inventory is almost full — the gate pulls you in!',
+  'game.bagLimit': 'max {max}',
   'lesson.hearts.retry':
     'Wrong answers can be retried while time remains. Running out of time, or crashing with no hearts left, ends the run.',
   'lesson.hearts.task': 'Review the rules, then finish the tutorial.',
@@ -302,7 +339,8 @@ export const en = {
   'lesson.hearts.tip':
     'After a portal or revive, choose a safe direction during the countdown. The arrow in front of your snake shows where you will go.',
   'engine.reviveTimeout': 'Revive timer expired',
-  'engine.wordTimeout': "Time's up! One tail segment lost. Your letters are safe.",
+  'engine.wordTimeout': "Time's up! −100 points and one tail segment lost. Your letters are safe.",
+  'engine.duplicateWord': 'You already used that word this round. Try a different one.',
   'engine.practiceTimeout': 'Try again! Your letters are still in your inventory.',
   'engine.hitBody': 'You hit your own tail',
   'engine.hitWall': 'You hit the edge of the board',
@@ -317,7 +355,7 @@ export const en = {
   'engine.lootAddedSuffix': ' letters',
   'engine.practiceRetry': 'Try this lesson again. Crashes in practice do not cost hearts.',
   'engine.reviveWrong': 'Not quite. Try spelling it again.',
-  'engine.revived': 'Revived! −100 points and 1 heart used.',
+  'engine.revived': 'Revived! −{points} points, 1 heart used, and {lost} letters lost.',
   'board.accessible': 'LexiSnake board. Use WASD or arrow keys to steer.',
   'board.practice': 'Practice',
   'board.error': 'The board could not load. Refresh the page to try again.',

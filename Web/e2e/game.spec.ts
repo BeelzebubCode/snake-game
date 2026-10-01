@@ -13,7 +13,7 @@ test('Home, settings, returning-player flow, and wide board', async ({ page }) =
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('เล่นทีละนิด');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('lexisnake');
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
   await expect(page.getByLabel('ความเร็วเจ้างู')).toHaveValue('slow');
   await expect(page.getByLabel('เวลาในประตูมิติต่างโลก')).toHaveValue('60');
@@ -115,7 +115,15 @@ test('a beginner learns steering, Shift, letters, chests and the portal with ill
   await page.keyboard.press('Enter');
   await expect(page.getByText('แมว', { exact: true })).toBeVisible();
   await expect(page.getByTestId('score')).toHaveText('450');
-  await page.getByRole('button', { name: 'อ่านกติกาก่อนเล่นจริง' }).click();
+  await page.getByRole('button', { name: 'ไปลองชนอิฐแดง' }).click();
+  await expect(page.getByRole('heading', { name: 'ระวังกล่องอิฐสีแดง' })).toBeVisible();
+  await page.getByRole('button', { name: 'ลองชนอิฐ' }).click();
+  await page.clock.runFor(3100 + 2200);
+  await expect(
+    page.getByRole('heading', { name: 'ชนอิฐ: เสีย 50 คะแนนและอักษร 1 ตัว' }),
+  ).toBeVisible();
+  await expect(page.getByTestId('score')).toHaveText('400');
+  await page.getByRole('button', { name: 'เข้าใจแล้ว ไปอ่านกติกา' }).click();
   await expect(page.getByRole('heading', { name: 'พักเกมและใช้หัวใจ' })).toBeVisible();
   await page.getByRole('button', { name: 'จบบทเรียน' }).click();
   await expect(page.getByRole('heading', { name: 'พร้อมออกผจญภัยแล้ว!' })).toBeVisible();
@@ -414,4 +422,100 @@ test('settings sidebar keeps drafts across categories and cancels without saving
   );
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
+});
+test('Thai-layout WASD steers, and tutorial panels never resize the board', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.clock.install();
+  await page.getByRole('button', { name: 'เข้าไปเล่นกัน' }).click();
+  await page.getByRole('button', { name: /มือใหม่ ขอฝึกก่อน/ }).click();
+  await page.getByRole('button', { name: 'เริ่มฝึกเลี้ยว' }).click();
+  const board = page.getByTestId('game-board');
+  await expect(page.locator('canvas')).toBeVisible();
+  const withBanner = await board.boundingBox();
+  expect(withBanner).not.toBeNull();
+  const press = (key: string, code: string) =>
+    page.evaluate(
+      ([k, c]) => window.dispatchEvent(new KeyboardEvent('keydown', { key: k, code: c })),
+      [key, code],
+    );
+  await page.clock.runFor(3100);
+  // Thai Kedmanee types ไ ฟ ห ก on the physical W A S D keys: up, left, down, right.
+  await press('ไ', 'KeyW');
+  await page.clock.runFor(650);
+  for (const [key, code] of [
+    ['ฟ', 'KeyA'],
+    ['ห', 'KeyS'],
+    ['ก', 'KeyD'],
+  ]) {
+    await press(key, code);
+    await page.clock.runFor(650);
+  }
+  await expect(page.getByRole('heading', { name: 'ลองครบทั้ง 4 ทิศแล้ว' })).toBeVisible();
+  const withReview = await board.boundingBox();
+  expect(withReview).toEqual(withBanner);
+  await page.getByRole('button', { name: 'พร้อมแล้ว ไปฝึกเร่งความเร็ว' }).click();
+  await expect(page.getByRole('heading', { name: 'กด Shift เพื่อเร่งความเร็ว' })).toBeVisible();
+  expect(await board.boundingBox()).toEqual(withBanner);
+  expect(errors).toEqual([]);
+});
+test('Word Journal opens as a book, turns pages, searches and closes', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const words = Array.from({ length: 12 }, (_, i) => ({
+    word: [
+      'FORCE',
+      'CITY',
+      'GOD',
+      'ANE',
+      'AGO',
+      'HOUSE',
+      'WATER',
+      'LIGHT',
+      'STORY',
+      'DREAM',
+      'RIVER',
+      'MOUNTAIN',
+    ][i],
+    meaningTh: 'คำที่ ' + (i + 1),
+    level: 'A1',
+  }));
+  await page.addInitScript((learned) => {
+    localStorage.setItem(
+      'lexisnake:v2',
+      JSON.stringify({
+        version: 2,
+        settings: { language: 'th' },
+        played: 2,
+        bestScore: 900,
+        learned,
+      }),
+    );
+  }, words);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'สมุดคำศัพท์', exact: true }).click();
+  const book = page.getByRole('dialog');
+  // The cover swings open, then the first spread shows the intro page and five words.
+  await expect(book.locator('.cover')).toHaveCount(0, { timeout: 5000 });
+  await expect(book.locator('.journal-entry')).toHaveCount(5);
+  await expect(book).toContainText('FORCE');
+  await expect(book).toContainText('หน้า 1–2 จาก 4');
+  await expect(page.getByRole('button', { name: 'หน้าก่อนหน้า' })).toBeDisabled();
+  await page.getByRole('button', { name: 'หน้าถัดไป' }).click();
+  await expect(book.locator('.sheet')).toHaveCount(0, { timeout: 3000 });
+  await expect(book).toContainText('หน้า 3–4 จาก 4');
+  await expect(book.locator('.journal-entry')).toHaveCount(7);
+  await expect(book).toContainText('MOUNTAIN');
+  await expect(page.getByRole('button', { name: 'หน้าถัดไป' })).toBeDisabled();
+  await page.keyboard.press('ArrowLeft');
+  await expect(book).toContainText('หน้า 1–2 จาก 4', { timeout: 3000 });
+  // Searching returns to the first spread and filters entries by word or meaning.
+  await page.getByLabel('ค้นหาคำศัพท์').fill('moun');
+  await expect(book.locator('.journal-entry')).toHaveCount(1);
+  await expect(book).toContainText('MOUNTAIN');
+  await page.getByRole('button', { name: 'ปิด', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(errors).toEqual([]);
 });
