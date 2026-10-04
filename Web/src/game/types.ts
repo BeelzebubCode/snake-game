@@ -140,7 +140,7 @@ export const DEFAULT_SETTINGS: Settings = {
   skin: 'mint',
   snakeStyle: 'smooth',
   showGrid: true,
-  map: 'auto',
+  map: 'random',
   portalSeconds: 60,
   level: 'all',
   sound: true,

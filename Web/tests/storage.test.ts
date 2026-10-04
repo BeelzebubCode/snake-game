@@ -94,7 +94,7 @@ describe('versioned local save', () => {
       skin: 'mint',
       snakeStyle: 'smooth',
       showGrid: true,
-      map: 'auto',
+      map: 'random',
       speed: 'normal',
       portalSeconds: 90,
       sound: false,

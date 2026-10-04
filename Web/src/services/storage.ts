@@ -43,7 +43,7 @@ export function loadSave(): SaveData {
           'beach',
         ].includes(s.map)
           ? s.map
-          : 'auto',
+          : 'random',
         speed: ['slow', 'normal', 'fast', 'expert'].includes(s.speed) ? s.speed : 'slow',
         portalSeconds: [15, 30, 45, 60, 90, 120].includes(s.portalSeconds) ? s.portalSeconds : 60,
         level: ['all', 'easy', 'medium', 'hard', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(
